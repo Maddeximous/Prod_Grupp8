@@ -53,13 +53,26 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* CastLineAction;
 	
-	/** Cast Line Input Action */
+	/** Reel Line Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* ReelLineAction;
 	
-	/** Cast Line Input Action */
+	/** Sonar Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* SonarAction;
+	
+	bool bIsFishing = false;
+	
+	bool bIsFishOnHook = false;
+	
+	FVector2d ReelStickPosition;
+
+	float ReelStickDegree;
+	
+	float caughtProgress = 0.0f;
+
+	
+	
 public:
 	AProd_grupp8Character();
 
@@ -101,6 +114,16 @@ protected:
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
+	
+	void StartFishing();
+	
+	void OnHook();
+	
+	void Caught();
+	
+	bool IsReeling();
+	
+	void Fishing(float deltaTime);
 
 protected:
 
@@ -115,6 +138,8 @@ public:
 
 	/** Returns first person camera component **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+	
+	virtual void Tick(float DeltaTime) override;
 
 };
 
