@@ -204,6 +204,37 @@ void AProd_grupp8Character::StartFishing()
 	float fTimeToFish = FMath::RandRange(1.0, 3.0);
 	FTimerHandle UnusedHandle;
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
+	
+	/*// You should ensure the Actor class is valid before spawning,
+	// otherwise you'll most likely crash the application!
+	if (IsValid(BP_FishingBobber))
+	{
+		// We need a pointer to the level we want to spawn the Actor in.
+		// You can get the persistent level from any Actor or Component with GetWorld()
+		UWorld* MyLevel = GetWorld();
+ 
+		// You should ensure the level is valid before spawning, or you could crash the engine!
+		// This is important if your spawn code could run from the Editor by any reason.
+		if (IsValid(MyLevel))
+		{
+			// You can determine the spawned Actor's initial location, rotation and scale.
+			// Here we're just setting it to the spawner's transform.
+			// NOTE: depending on your Actor settings, this could prevent spawning if the location is obstructed!
+			FTransform SpawnTransform = GetActorTransform();
+ 
+			// Use UWorld->SpawnActor<>() to spawn.
+			// It will return a cast pointer of the Actor type you specified.
+			// There's several variants of the function that allow extra customization.
+			// Here we just pass the Actor class for reflection support, and the transform.
+			AMyActor* SpawnedActor = MyLevel->SpawnActor<AMyActor>(MyActorClass, SpawnTransform);
+ 
+			// You should validate the actor pointer before accessing it in case the Spawn failed.
+			if (IsValid(SpawnedActor))
+			{
+				UE_LOG(LogTemp, Log, TEXT("Spawned successfully! New Actor: %s"), *SpawnedActor->GetName());
+			}
+		}
+	}*/
 
 }
 

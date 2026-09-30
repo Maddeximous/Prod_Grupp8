@@ -70,6 +70,7 @@ protected:
 	float ReelStickDegree;
 	
 	float caughtProgress = 0.0f;
+
 	
 	
 public:
