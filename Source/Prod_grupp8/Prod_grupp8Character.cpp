@@ -50,8 +50,8 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoJumpStart);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AProd_grupp8Character::DoJumpEnd);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoJumpStart);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AProd_grupp8Character::DoJumpEnd);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::MoveInput);
@@ -59,6 +59,15 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		// Looking/Aiming
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::LookInput);
 		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::LookInput);
+		
+		// Casting fishing line
+		EnhancedInputComponent->BindAction(CastLineAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoCastLine);
+		
+		// Casting fishing line
+		EnhancedInputComponent->BindAction(ReelLineAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::ReelLineInput);
+		
+		// Casting fishing line
+		EnhancedInputComponent->BindAction(SonarAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSonar);
 	}
 	else
 	{
@@ -73,7 +82,17 @@ void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	// pass the axis values to the move input
-	DoMove(MovementVector.X, MovementVector.Y);
+	DoMove(0, MovementVector.Y);
+
+}
+
+void AProd_grupp8Character::ReelLineInput(const FInputActionValue& Value)
+{
+	// get the Vector2D move axis
+	FVector2D ReelLineVector = Value.Get<FVector2D>();
+
+	// pass the axis values to the move input
+	DoReelLine(ReelLineVector.X, ReelLineVector.Y);
 
 }
 
@@ -92,8 +111,8 @@ void AProd_grupp8Character::DoAim(float Yaw, float Pitch)
 	if (GetController())
 	{
 		// pass the rotation inputs
-		AddControllerYawInput(Yaw);
-		AddControllerPitchInput(Pitch);
+		AddControllerYawInput(Yaw * 0.2f);
+		AddControllerPitchInput(Pitch * 0.2f);
 	}
 }
 
@@ -107,12 +126,35 @@ void AProd_grupp8Character::DoMove(float Right, float Forward)
 	}
 }
 
+void AProd_grupp8Character::DoCastLine()
+{
+	if (GetController())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fish"));
+	}
+}
+
+void AProd_grupp8Character::DoSonar()
+{
+	if (GetController())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Pling"));
+	}
+}
+
 void AProd_grupp8Character::DoJumpStart()
 {
 	// pass Jump to the character
 	Jump();
 }
 
+void AProd_grupp8Character::DoReelLine(float Right, float Down)
+{
+	if (GetController())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("The float value is: %f"), Down);
+	}
+}
 void AProd_grupp8Character::DoJumpEnd()
 {
 	// pass StopJumping to the character
