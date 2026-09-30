@@ -17,6 +17,8 @@ void AFishManager::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	SpawnInitialFish();
+	
 }
 
 // Called every frame
@@ -24,6 +26,50 @@ void AFishManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AFishManager::SpawnInitialFish()
+{
+	for (int32 i = 0; i < 3; i++)
+	{
+		SpawnRandomFish();
+	}
+}
+
+AFish* AFishManager::SpawnRandomFish()
+{
+	if (FishDataBase.Num() == 0 || SpawnLocations.Num() == 0)
+	{
+		return nullptr;
+	}
+	
+	TArray<EFishType> AvailableTypes;
+	FishDataBase.GetKeys(AvailableTypes);
+	EFishType RandomType = AvailableTypes[FMath::RandRange(0, AvailableTypes.Num() - 1)];
+	
+	FVector RandomLocation = SpawnLocations[FMath::RandRange(0, SpawnLocations.Num() - 1)];
+	
+	UE_LOG(LogTemp, Warning, TEXT("Random Fish: %s"), *RandomLocation.ToString());
+	
+	return SpawnFishOfType(RandomType, RandomLocation);
+}
+
+void AFishManager::OnFishCaught(AFish* CaughtFish)
+{
+	if (CaughtFish)
+	{
+		CaughtFish->Destroy();
+		
+		float RespawnDelay = FMath::RandRange(20.0f, 30.0f);
+		
+		GetWorldTimerManager().SetTimer(
+			RespawnTimerHandle,
+			[this]() { SpawnRandomFish(); },
+			RespawnDelay,
+			false
+			);
+		
+	}
 }
 
 AFish* AFishManager::SpawnFishOfType(EFishType TypeToSpawn, FVector SpawnLocation)
@@ -44,6 +90,7 @@ AFish* AFishManager::SpawnFishOfType(EFishType TypeToSpawn, FVector SpawnLocatio
 		
 		NewFish->FishSpecies = TypeToSpawn;
 		NewFish->Weight = RandomWeight;
+		UE_LOG(LogTemp, Warning, TEXT("Fish Type: %hdd, Fish Weight: %f"), NewFish->FishSpecies, NewFish->Weight);
 	}
 	
 	return NewFish;
