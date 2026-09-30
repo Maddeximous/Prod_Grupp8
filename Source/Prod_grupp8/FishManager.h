@@ -22,8 +22,19 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
 	TSubclassOf<class AFish> FishToSpawn;
 	
-	UFUNCTION(BlueprintCallable, Category = "FishData")
+	UPROPERTY(EditAnywhere, Category = "FishData")
+	TArray<FVector> SpawnLocations;
+	
+	UFUNCTION(BlueprintCallable, Category = "Fishing")
+	void OnFishCaught(AFish* CaughtFish);
+	
+	void SpawnInitialFish();
+	
+	AFish* SpawnRandomFish();
+	
 	AFish* SpawnFishOfType(EFishType TypeToSpawn, FVector SpawnLocation);
+	
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -32,5 +43,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+private:
+	FTimerHandle RespawnTimerHandle;
 
 };
