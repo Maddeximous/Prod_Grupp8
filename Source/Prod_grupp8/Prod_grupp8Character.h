@@ -49,6 +49,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* MouseLookAction;
 	
+	/** Cast Line Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* CastLineAction;
+	
+	/** Cast Line Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* ReelLineAction;
+	
+	/** Cast Line Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* SonarAction;
 public:
 	AProd_grupp8Character();
 
@@ -59,6 +70,9 @@ protected:
 
 	/** Called from Input Actions for looking input */
 	void LookInput(const FInputActionValue& Value);
+	
+	/** Called from Input Actions for movement input */
+	void ReelLineInput(const FInputActionValue& Value);
 
 	/** Handles aim inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -72,6 +86,18 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpStart();
 
+	/** Handles jump start inputs from either controls or UI interfaces */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoCastLine();
+	
+	/** Handles jump start inputs from either controls or UI interfaces */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoSonar();
+	
+	/** Handles jump end inputs from either controls or UI interfaces */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoReelLine(float Right, float Down);
+	
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
