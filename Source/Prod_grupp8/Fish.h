@@ -7,6 +7,8 @@
 #include "FishTypes.h"
 #include "Fish.generated.h"
 
+class USphereComponent;
+
 UCLASS()
 class PROD_GRUPP8_API AFish : public AActor
 {
@@ -15,10 +17,24 @@ class PROD_GRUPP8_API AFish : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AFish();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fish Properties")
 	float Weight;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fish Properties")
 	EFishType FishSpecies;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USphereComponent* FishingSphere;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing")
+	bool bCanFish;
+	
+	UFUNCTION()
+	void OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION()
+	void OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

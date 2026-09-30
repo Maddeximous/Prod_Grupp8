@@ -2,6 +2,8 @@
 
 
 #include "Fish.h"
+#include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AFish::AFish()
@@ -9,6 +11,19 @@ AFish::AFish()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
+	//Skapa en rooot component på objektet.
+	USceneComponent* RootComp = CreateDefaultSubobject<USceneComponent>("RootComponent");
+	RootComponent = RootComp;
+	
+	//Skapa en sphear på objektet och sätt fast den vid roten
+	FishingSphere = CreateDefaultSubobject<USphereComponent>(TEXT("FishingSphere"));
+	FishingSphere->SetupAttachment(RootComponent);
+	
+	FishingSphere->SetSphereRadius(300.0f);
+	
+	FishingSphere->SetCollisionProfileName("Trigger");
+	
+	bCanFish = false;
 
 }
 
@@ -17,6 +32,12 @@ void AFish::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (FishingSphere)
+	{
+		FishingSphere->OnComponentBeginOverlap.AddDynamic(this, &AFish::OnSphereOverlapBegin);
+		FishingSphere->OnComponentEndOverlap.AddDynamic(this, &AFish::OnSphereOverlapEnd);
+	}
+	
 }
 
 // Called every frame
@@ -24,5 +45,27 @@ void AFish::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AFish::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	
+	if (OtherActor && OtherActor == Pawn)
+	{
+		bCanFish = true;
+		UE_LOG(LogTemp, Warning, TEXT("Can Fish!"));
+	}
+}
+
+void AFish::OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	
+	if (OtherActor && OtherActor == Pawn)
+	{
+		bCanFish = false;
+		UE_LOG(LogTemp, Warning, TEXT("Can NOT Fish!"));
+	}
 }
 

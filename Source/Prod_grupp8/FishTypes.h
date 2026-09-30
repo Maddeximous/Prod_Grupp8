@@ -40,6 +40,9 @@ struct FFishData
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
 	float PricePerKilo;
 	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
+	float CatchDifficulty;
+	
 };
 
 class PROD_GRUPP8_API FishTypes
