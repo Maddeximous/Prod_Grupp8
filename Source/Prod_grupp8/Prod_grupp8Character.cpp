@@ -75,7 +75,6 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	}
 }
 
-
 void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
 {
 	// get the Vector2D move axis
@@ -85,6 +84,65 @@ void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
 	DoMove(0, MovementVector.Y);
 
 }
+void AProd_grupp8Character::LookInput(const FInputActionValue& Value)
+{
+	// get the Vector2D look axis
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+	// pass the axis values to the aim input
+	DoAim(LookAxisVector.X, LookAxisVector.Y);
+
+}
+
+
+void AProd_grupp8Character::DoMove(float Right, float Forward)
+{
+	if (GetController())
+	{
+		if (!bIsFishing)
+		{
+			// pass the move inputs
+			AddMovementInput(GetActorRightVector(), Right);
+			AddMovementInput(GetActorForwardVector(), Forward);
+		}
+	}
+}
+
+
+
+void AProd_grupp8Character::DoJumpStart()
+{
+	// pass Jump to the character
+	Jump();
+}
+
+void AProd_grupp8Character::DoJumpEnd()
+{
+	// pass StopJumping to the character
+	StopJumping();
+}
+void AProd_grupp8Character::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	if (bIsFishOnHook)
+	{
+		Fishing(DeltaTime);
+	}
+}
+
+void AProd_grupp8Character::DoSonar()
+{
+	if (GetController())
+	{
+		if (!bIsFishing)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Pling"));
+		}
+	}
+}
+
+
+
 
 void AProd_grupp8Character::ReelLineInput(const FInputActionValue& Value)
 {
@@ -96,33 +154,33 @@ void AProd_grupp8Character::ReelLineInput(const FInputActionValue& Value)
 
 }
 
-void AProd_grupp8Character::LookInput(const FInputActionValue& Value)
-{
-	// get the Vector2D look axis
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	// pass the axis values to the aim input
-	DoAim(LookAxisVector.X, LookAxisVector.Y);
-
-}
-
 void AProd_grupp8Character::DoAim(float Yaw, float Pitch)
 {
 	if (GetController())
 	{
-		// pass the rotation inputs
-		AddControllerYawInput(Yaw * 0.2f);
-		AddControllerPitchInput(Pitch * 0.2f);
+		if (!bIsFishing)
+		{
+			// pass the rotation inputs
+			AddControllerYawInput(Yaw * 0.2f);
+			AddControllerPitchInput(Pitch * 0.2f);
+		}
 	}
 }
 
-void AProd_grupp8Character::DoMove(float Right, float Forward)
+void AProd_grupp8Character::DoReelLine(float Right, float Down)
 {
 	if (GetController())
 	{
-		// pass the move inputs
-		AddMovementInput(GetActorRightVector(), Right);
-		AddMovementInput(GetActorForwardVector(), Forward);
+		if (bIsFishOnHook)
+		{
+			FVector2d NewReelStickPosition = FVector2d(Right, Down).GetSafeNormal();
+			// Räkna ut vinkeln via arccosine av dot product
+			float Dot = FVector2D::DotProduct(NewReelStickPosition, ReelStickPosition.GetSafeNormal());
+			float AngleInRadians = FMath::Acos(Dot);
+			
+			ReelStickDegree = FMath::RadiansToDegrees(AngleInRadians);
+			ReelStickPosition = NewReelStickPosition;
+		}
 	}
 }
 
@@ -130,33 +188,51 @@ void AProd_grupp8Character::DoCastLine()
 {
 	if (GetController())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Fish"));
+		if (!bIsFishing)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Fish"));
+		
+			//checka om vi kan fiska
+			StartFishing();
+		}
 	}
 }
 
-void AProd_grupp8Character::DoSonar()
+void AProd_grupp8Character::StartFishing()
 {
-	if (GetController())
+	bIsFishing = true;
+	float fTimeToFish = FMath::RandRange(1.0, 3.0);
+	FTimerHandle UnusedHandle;
+	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
+
+}
+
+//När man har fått napp (innan fiske)
+void AProd_grupp8Character::OnHook()
+{
+	bIsFishOnHook = true;
+	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
+}
+
+//(Under tiden man fiskar)
+void AProd_grupp8Character::Fishing(float deltaTime)
+{
+	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Pling"));
+		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
+		if (caughtProgress >= 100)
+		{
+			Caught();
+		}
+		UE_LOG(LogTemp, Warning, TEXT("%f"), caughtProgress);
 	}
 }
 
-void AProd_grupp8Character::DoJumpStart()
+//När man fångat fisken (efter fiske)
+void AProd_grupp8Character::Caught()
 {
-	// pass Jump to the character
-	Jump();
+	bIsFishing = false;
+	bIsFishOnHook = false;
+	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
 }
 
-void AProd_grupp8Character::DoReelLine(float Right, float Down)
-{
-	if (GetController())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("The float value is: %f"), Down);
-	}
-}
-void AProd_grupp8Character::DoJumpEnd()
-{
-	// pass StopJumping to the character
-	StopJumping();
-}
