@@ -25,3 +25,19 @@ void AInventory::Tick(float DeltaTime)
 
 }
 
+void AInventory::AddFish(AFish* FishToAdd)
+{
+	if (FishToAdd)
+	{
+		Fish.Add(FishToAdd);
+	}
+}
+
+void AInventory::RemoveFish(AFish* FishToRemove)
+{
+	if (FishToRemove)
+	{
+		Fish.Remove(FishToRemove);
+	}
+}
+
