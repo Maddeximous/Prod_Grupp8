@@ -25,6 +25,13 @@ void AShop::BeginPlay()
 	EnableInput(GetWorld()->GetFirstPlayerController());
 
 	InputComponent->BindKey(
+		EKeys::T,
+		IE_Pressed,
+		this,
+		&AShop::Transaction
+	);
+	
+	InputComponent->BindKey(
 		EKeys::E,
 		IE_Pressed,
 		this,
@@ -60,34 +67,7 @@ void AShop::BeginPlay()
 
 	PrintCurrentItem();
 
-	for (ARod* Rod : Rods)
-	{
-		if (Rod)
-		{
-			UE_LOG(
-				LogTemp,
-				Warning,
-				TEXT("Rod: %s | price: %d | luck: %d"),
-				*Rod->name.ToString(),
-				Rod->price,
-				Rod->luck
-			);
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(
-					-1,
-					5.0f,
-					FColor::Green,
-					FString::Printf(
-					TEXT("Rod: %s | price: %d | luck: %d"),
-					*Rod->name.ToString(),
-					Rod->price,
-					Rod->luck
-					)
-				);
-			}
-		}
-	}
+	
 	
 	if (ShopWidgetClass)
 	{
@@ -117,16 +97,6 @@ void AShop::BeginPlay()
 		}
 	}
 	
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,                         // Message key
-			5.0f,                       // Display time
-			FColor::Green,              // Color
-			TEXT("WELCOME TO THE SHOP!")
-		);
-	}
-	
 }
 
 // Called every frame
@@ -140,23 +110,24 @@ void AShop::addDollars()
 {
 	dollars+= 100;
 	
-	UE_LOG(LogTemp, Warning, TEXT("Gold: %d"), dollars);
+	UE_LOG(LogTemp, Warning, TEXT("Dollars: %d"), dollars);
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.0f,
-			FColor::Green,
-			FString::Printf(TEXT("dollars: %d"), dollars)
-		);
-	}
 }
 
 void AShop::MoveLeft()
 {
 	CurrentSection = EShopSection::Inventory;
 	CurrentIndex = 0;
+	
+	GEngine->AddOnScreenDebugMessage(
+		1,
+		5.0f,
+		FColor::Yellow,
+		FString::Printf(
+			TEXT("Money: %d"),
+			dollars
+		)
+	);
 
 	PrintCurrentItem();
 }
@@ -165,6 +136,15 @@ void AShop::MoveRight()
 {
 	CurrentSection = EShopSection::Shop;
 	CurrentIndex = 0;
+	GEngine->AddOnScreenDebugMessage(
+		1,
+		5.0f,
+		FColor::Yellow,
+		FString::Printf(
+			TEXT("Money: %d"),
+			dollars
+		)
+	);
 
 	PrintCurrentItem();
 }
@@ -215,7 +195,7 @@ void AShop::PrintCurrentItem()
 		{
 			GEngine->AddOnScreenDebugMessage(
 				-1,
-				2.0f,
+				10.0f,
 				FColor::Red,
 				TEXT("Inventory is empty")
 			);
@@ -278,7 +258,7 @@ void AShop::PrintCurrentItem()
 
 			GEngine->AddOnScreenDebugMessage(
 				-1,
-				2.0f,
+				10.0f,
 				FColor::Green,
 				FString::Printf(
 					TEXT("INVENTORY: %s | Weight: %.2f kg"),
@@ -294,7 +274,7 @@ void AShop::PrintCurrentItem()
 		{
 			GEngine->AddOnScreenDebugMessage(
 				-1,
-				2.0f,
+				10.0f,
 				FColor::Red,
 				TEXT("Shop is empty")
 			);
@@ -308,10 +288,10 @@ void AShop::PrintCurrentItem()
 		{
 			GEngine->AddOnScreenDebugMessage(
 				-1,
-				2.0f,
+				10.0f,
 				FColor::Green,
 				FString::Printf(
-				TEXT("Rod: %s | price: %d | luck: %d"),
+				TEXT("Shop: %s | price: %d | luck: %d"),
 				*CurrentRod->name.ToString(),
 				CurrentRod->price,
 				CurrentRod->luck
@@ -319,4 +299,114 @@ void AShop::PrintCurrentItem()
 			);
 		}
 	}
+}
+
+void AShop::Transaction()
+{
+	if (!PlayerInventory)
+	{
+		return;
+	}
+
+	if (CurrentSection == EShopSection::Inventory)
+	{
+		if (PlayerInventory->Fish.Num() == 0)
+		{
+			return;
+		}
+
+		AFish* CurrentFish =
+			PlayerInventory->Fish[CurrentIndex];
+
+		if (!CurrentFish)
+		{
+			return;
+		}
+
+		int32 SellPrice = FMath::RoundToInt(CurrentFish->Weight);
+
+
+		dollars += SellPrice;
+
+		PlayerInventory->RemoveFish(CurrentFish);
+
+		GEngine->AddOnScreenDebugMessage(
+			2,
+			3.0f,
+			FColor::Green,
+			FString::Printf(
+				TEXT("SOLD FISH FOR %d DOLLARS"),
+				SellPrice
+			)
+		);
+
+		// Make sure the index is still valid
+		if (CurrentIndex >= PlayerInventory->Fish.Num())
+		{
+			CurrentIndex =
+				FMath::Max(0, PlayerInventory->Fish.Num() - 1);
+		}
+
+		PrintCurrentItem();
+	}
+	else
+	{
+		if (Rods.Num() == 0)
+		{
+			return;
+		}
+
+		ARod* CurrentRod = Rods[CurrentIndex];
+
+		if (!CurrentRod)
+		{
+			return;
+		}
+
+		int32 RodPrice = CurrentRod->price;
+
+		if (dollars < RodPrice)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				2,
+				3.0f,
+				FColor::Red,
+				TEXT("NOT ENOUGH MONEY")
+			);
+
+			return;
+		}
+
+		ARod* NewRod = GetWorld()->SpawnActor<ARod>(
+			ARod::StaticClass(),
+			FVector::ZeroVector,
+			FRotator::ZeroRotator
+		);
+
+		if (!NewRod)
+		{
+			return;
+		}
+
+		NewRod->name = CurrentRod->name;
+		NewRod->price = CurrentRod->price;
+		NewRod->luck = CurrentRod->luck;
+
+		dollars -= RodPrice;
+		PlayerInventory->Rods.Add(NewRod);
+
+		GEngine->AddOnScreenDebugMessage(
+			2,
+			3.0f,
+			FColor::Green,
+			FString::Printf(
+				TEXT("BOUGHT %s FOR %d DOLLARS"),
+				*CurrentRod->name.ToString(),
+				RodPrice
+			)
+		);
+
+		PrintCurrentItem();
+	}
+
 }

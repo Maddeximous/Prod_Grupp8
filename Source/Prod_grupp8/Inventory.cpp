@@ -2,6 +2,8 @@
 
 
 #include "Inventory.h"
+#include "Fish.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AInventory::AInventory()
@@ -15,6 +17,8 @@ AInventory::AInventory()
 void AInventory::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	SpawnTestFish();
 	
 }
 
@@ -40,4 +44,34 @@ void AInventory::RemoveFish(AFish* FishToRemove)
 		Fish.Remove(FishToRemove);
 	}
 }
+
+void AInventory::SpawnTestFish()
+{
+	for (int32 i = 0; i < 5; i++)
+	{
+		AFish* NewFish = GetWorld()->SpawnActor<AFish>(
+			AFish::StaticClass(),
+			FVector::ZeroVector,
+			FRotator::ZeroRotator
+		);
+
+		if (NewFish)
+		{
+			// Pick a random fish species
+			int32 RandomSpecies = FMath::RandRange(
+				1,
+				static_cast<int32>(EFishType::Sutare)
+			);
+
+			NewFish->FishSpecies =
+				static_cast<EFishType>(RandomSpecies);
+
+			// Random weight for testing
+			NewFish->Weight = FMath::FRandRange(0.5f, 10.0f);
+
+			AddFish(NewFish);
+		}
+	}
+}
+
 

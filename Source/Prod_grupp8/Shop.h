@@ -58,6 +58,8 @@ private:
 	void MoveRight();
 	void MoveUp();
 	void MoveDown();
+	
+	void Transaction();
 
 	void PrintCurrentItem();
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Fish.h"
+#include "Rod.h"
 #include "Inventory.generated.h"
 
 UCLASS()
@@ -17,6 +18,9 @@ public:
 	AInventory();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<ARod*> Rods;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<AFish*> Fish;
 	
 	UFUNCTION(BlueprintCallable)
@@ -24,6 +28,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveFish(AFish* FishToRemove);
+	
+	UFUNCTION(BlueprintCallable)
+	void SpawnTestFish();
+
 
 
 protected:
