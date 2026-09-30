@@ -211,6 +211,7 @@ void AProd_grupp8Character::StartFishing()
 void AProd_grupp8Character::OnHook()
 {
 	bIsFishOnHook = true;
+	caughtProgress = 0.0f;
 	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
 }
 
