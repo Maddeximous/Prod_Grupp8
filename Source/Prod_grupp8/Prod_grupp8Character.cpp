@@ -213,7 +213,7 @@ void AProd_grupp8Character::DoCastLine()
 {
 	if (GetController())
 	{
-		if (!bIsFishing)
+		if (!bIsFishing && FishInRange)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Fish"));
 		
