@@ -3,7 +3,11 @@
 
 #include "Fish.h"
 #include "Components/SphereComponent.h"
+#include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "UObject/ConstructorHelpers.h"
+
 
 // Sets default values
 AFish::AFish()
@@ -21,9 +25,20 @@ AFish::AFish()
 	
 	FishingSphere->SetSphereRadius(300.0f);
 	
+	//Skapa ljud component
+	FishingAudioComp = CreateDefaultSubobject<UAudioComponent>("FishingAudioComp");
+	FishingAudioComp->SetupAttachment(RootComponent);
+	FishingAudioComp->bAutoActivate = false;
+	
 	FishingSphere->SetCollisionProfileName("Trigger");
 	
 	bCanFish = false;
+	
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Script/Engine.SoundWave'/Game/Audio/RawAudio/loop_bubbles_1.loop_bubbles_1'"));
+	if (SoundAsset.Succeeded())
+	{
+		FishingSound = SoundAsset.Object;
+	}
 
 }
 
@@ -38,6 +53,10 @@ void AFish::BeginPlay()
 		FishingSphere->OnComponentEndOverlap.AddDynamic(this, &AFish::OnSphereOverlapEnd);
 	}
 	
+	if (FishingAudioComp && FishingSound)
+	{
+		FishingAudioComp->SetSound(FishingSound);
+	}
 }
 
 // Called every frame
@@ -55,6 +74,16 @@ void AFish::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	{
 		bCanFish = true;
 		UE_LOG(LogTemp, Warning, TEXT("Can Fish!"));
+		
+		if (FishingAudioComp && FishingSound)
+		{
+			if (!FishingAudioComp->IsPlaying())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Sound Playing!"));
+
+				FishingAudioComp->Play();
+			}
+		}
 	}
 }
 
@@ -66,6 +95,11 @@ void AFish::OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Othe
 	{
 		bCanFish = false;
 		UE_LOG(LogTemp, Warning, TEXT("Can NOT Fish!"));
+		
+		if (FishingAudioComp && FishingAudioComp->IsPlaying())
+		{
+			FishingAudioComp->Stop();
+		}
 	}
 }
 

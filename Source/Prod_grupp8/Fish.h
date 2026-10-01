@@ -8,6 +8,8 @@
 #include "Fish.generated.h"
 
 class USphereComponent;
+class UAudioComponent;
+class USoundBase;
 
 UCLASS()
 class PROD_GRUPP8_API AFish : public AActor
@@ -26,6 +28,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* FishingSphere;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UAudioComponent* FishingAudioComp;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing")
 	bool bCanFish;
 	
@@ -42,5 +47,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	USoundBase* FishingSound;
 
 };
