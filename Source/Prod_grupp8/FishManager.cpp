@@ -21,6 +21,8 @@ AFishManager::AFishManager()
 void AFishManager::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	SpawnInitialFish();
 }
 
 // Called every frame
@@ -34,7 +36,9 @@ void AFishManager::Tick(float DeltaTime)
 
 void AFishManager::SpawnInitialFish()
 {
-	for (int32 i = 0; i < 3; i++)
+	int AmountOfFish = FMath::RandRange(3, 5);
+	
+	for (int32 i = 0; i < AmountOfFish; i++)
 	{
 		SpawnRandomFish();
 	}
@@ -73,15 +77,21 @@ void AFishManager::OnFishCaught(AFish* CaughtFish)
 
 		CaughtFish->Destroy();
 		
-		float RespawnDelay = FMath::RandRange(20.0f, 30.0f);
+		float RespawnDelay = FMath::RandRange(5.0f, 10.0f);
 		
-		GetWorldTimerManager().SetTimer(
+		int AmountOfFishToSpawn = FMath::RandRange(1, 3);
+		
+		if (SpawnedFish.Num() == MaxAmountOfFish) AmountOfFishToSpawn = 0;
+		
+		for (int32 i = 0; i < AmountOfFishToSpawn; i++)
+		{
+			GetWorldTimerManager().SetTimer(
 			RespawnTimerHandle,
 			[this]() { SpawnRandomFish(); },
 			RespawnDelay,
 			false
 			);
-		
+		}
 	}
 }
 

@@ -27,6 +27,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
 	TSubclassOf<class AFish> FishToSpawn;
 	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
+	int MaxAmountOfFish;
+	
 	UPROPERTY(EditAnywhere, Category = "FishData")
 	TArray<AFish*> SpawnedFish;
 	
