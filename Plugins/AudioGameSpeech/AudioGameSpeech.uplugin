@@ -1,0 +1,18 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1",
+	"FriendlyName": "Audio Game Speech",
+	"Description": "Text-to-speech (built-in Piper voice, or Windows voices) rendered to audio and played through Unreal.",
+	"Category": "Audio",
+	"CreatedBy": "",
+	"CanContainContent": false,
+	"Modules": [
+		{
+			"Name": "AudioGameSpeech",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [ "Win64" ]
+		}
+	]
+}
