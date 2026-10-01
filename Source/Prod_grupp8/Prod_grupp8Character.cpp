@@ -63,11 +63,17 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		// Casting fishing line
 		EnhancedInputComponent->BindAction(CastLineAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoCastLine);
 		
-		// Casting fishing line
+		// Reeling fishing line
 		EnhancedInputComponent->BindAction(ReelLineAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::ReelLineInput);
 		
-		// Casting fishing line
+		// Sonar
 		EnhancedInputComponent->BindAction(SonarAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSonar);
+		
+		// Sway right
+		EnhancedInputComponent->BindAction(SwayRightAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayRight);
+		
+		// Sway left
+		EnhancedInputComponent->BindAction(SwayLeftAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayLeft);
 	}
 	else
 	{
@@ -141,8 +147,27 @@ void AProd_grupp8Character::DoSonar()
 	}
 }
 
+void AProd_grupp8Character::DoSwayRight()
+{
+	if (GetController())
+	{
+		if (bIsFishOnHook)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Right"));
+		}
+	}
+}
 
-
+void AProd_grupp8Character::DoSwayLeft()
+{
+	if (GetController())
+	{
+		if (bIsFishOnHook)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Left"));
+		}
+	}
+}
 
 void AProd_grupp8Character::ReelLineInput(const FInputActionValue& Value)
 {
@@ -205,7 +230,6 @@ void AProd_grupp8Character::StartFishing()
 	FTimerHandle UnusedHandle;
 	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
-
 }
 
 //När man har fått napp (innan fiske)
@@ -221,6 +245,7 @@ void AProd_grupp8Character::Fishing(float deltaTime)
 {
 	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
 	{
+		
 		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
 		if (caughtProgress >= 100)
 		{

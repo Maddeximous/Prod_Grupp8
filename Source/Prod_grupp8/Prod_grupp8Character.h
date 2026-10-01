@@ -61,6 +61,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* SonarAction;
 	
+	/** Sonar Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* SwayRightAction;
+	
+	/** Sonar Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* SwayLeftAction;
+	
 	bool bIsFishing = false;
 	
 	bool bIsFishOnHook = false;
@@ -88,7 +96,7 @@ protected:
 	/** Called from Input Actions for looking input */
 	void LookInput(const FInputActionValue& Value);
 	
-	/** Called from Input Actions for movement input */
+	/** Called from Input Actions for reel line input */
 	void ReelLineInput(const FInputActionValue& Value);
 
 	/** Handles aim inputs from either controls or UI interfaces */
@@ -103,13 +111,21 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpStart();
 
-	/** Handles jump start inputs from either controls or UI interfaces */
+	/** Handles castLine start inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoCastLine();
 	
-	/** Handles jump start inputs from either controls or UI interfaces */
+	/** Handles sonar input */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSonar();
+	
+	/** Handles Sway input for LB (right) */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoSwayLeft();
+	
+	/** Handles Sway input for RB (left) */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoSwayRight();
 	
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -125,7 +141,7 @@ protected:
 	
 	void Caught();
 	
-	bool IsReeling();
+	// bool IsReeling();
 	
 	void Fishing(float deltaTime);
 	
