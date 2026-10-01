@@ -6,9 +6,7 @@
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
-#include "src/Core/MathFunctions.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Prod_grupp8Character.h"
 
 
 // Sets default values
@@ -74,10 +72,6 @@ void AFish::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	
 	if (OtherActor && OtherActor == Pawn)
 	{
-		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
-		{
-			Player->FishInRange = this;
-		}
 		bCanFish = true;
 		UE_LOG(LogTemp, Warning, TEXT("Can Fish!"));
 		
@@ -99,10 +93,6 @@ void AFish::OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Othe
 	
 	if (OtherActor && OtherActor == Pawn)
 	{
-		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
-		{
-			Player->FishInRange = nullptr;
-		}
 		bCanFish = false;
 		UE_LOG(LogTemp, Warning, TEXT("Can NOT Fish!"));
 		

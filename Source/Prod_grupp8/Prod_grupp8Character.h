@@ -87,9 +87,6 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	TSubclassOf<AActor> BobberToSpawn;
-	
-	UPROPERTY()
-	TObjectPtr<AFish> FishInRange;
 
 protected:
 
