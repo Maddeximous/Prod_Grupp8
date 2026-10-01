@@ -63,11 +63,17 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		// Casting fishing line
 		EnhancedInputComponent->BindAction(CastLineAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoCastLine);
 		
-		// Casting fishing line
+		// Reeling fishing line
 		EnhancedInputComponent->BindAction(ReelLineAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::ReelLineInput);
 		
-		// Casting fishing line
+		// Sonar
 		EnhancedInputComponent->BindAction(SonarAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSonar);
+		
+		// Sway right
+		EnhancedInputComponent->BindAction(SwayRightAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayRight);
+		
+		// Sway left
+		EnhancedInputComponent->BindAction(SwayLeftAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayLeft);
 	}
 	else
 	{
@@ -141,8 +147,27 @@ void AProd_grupp8Character::DoSonar()
 	}
 }
 
+void AProd_grupp8Character::DoSwayRight()
+{
+	if (GetController())
+	{
+		if (bIsFishOnHook)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Right"));
+		}
+	}
+}
 
-
+void AProd_grupp8Character::DoSwayLeft()
+{
+	if (GetController())
+	{
+		if (bIsFishOnHook)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Left"));
+		}
+	}
+}
 
 void AProd_grupp8Character::ReelLineInput(const FInputActionValue& Value)
 {
@@ -203,39 +228,8 @@ void AProd_grupp8Character::StartFishing()
 	bIsFishing = true;
 	float fTimeToFish = FMath::RandRange(1.0, 3.0);
 	FTimerHandle UnusedHandle;
+	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
-	
-	/*// You should ensure the Actor class is valid before spawning,
-	// otherwise you'll most likely crash the application!
-	if (IsValid(BP_FishingBobber))
-	{
-		// We need a pointer to the level we want to spawn the Actor in.
-		// You can get the persistent level from any Actor or Component with GetWorld()
-		UWorld* MyLevel = GetWorld();
- 
-		// You should ensure the level is valid before spawning, or you could crash the engine!
-		// This is important if your spawn code could run from the Editor by any reason.
-		if (IsValid(MyLevel))
-		{
-			// You can determine the spawned Actor's initial location, rotation and scale.
-			// Here we're just setting it to the spawner's transform.
-			// NOTE: depending on your Actor settings, this could prevent spawning if the location is obstructed!
-			FTransform SpawnTransform = GetActorTransform();
- 
-			// Use UWorld->SpawnActor<>() to spawn.
-			// It will return a cast pointer of the Actor type you specified.
-			// There's several variants of the function that allow extra customization.
-			// Here we just pass the Actor class for reflection support, and the transform.
-			AMyActor* SpawnedActor = MyLevel->SpawnActor<AMyActor>(MyActorClass, SpawnTransform);
- 
-			// You should validate the actor pointer before accessing it in case the Spawn failed.
-			if (IsValid(SpawnedActor))
-			{
-				UE_LOG(LogTemp, Log, TEXT("Spawned successfully! New Actor: %s"), *SpawnedActor->GetName());
-			}
-		}
-	}*/
-
 }
 
 //När man har fått napp (innan fiske)
@@ -251,6 +245,7 @@ void AProd_grupp8Character::Fishing(float deltaTime)
 {
 	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
 	{
+		
 		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
 		if (caughtProgress >= 100)
 		{
@@ -266,5 +261,21 @@ void AProd_grupp8Character::Caught()
 	bIsFishing = false;
 	bIsFishOnHook = false;
 	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
+	if (Bobber)
+	{
+		Bobber -> Destroy();
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
+	//Bobber -> Destroy();
+}
+
+AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
+	FRotator SpawnRotation = FRotator::ZeroRotator;
+	UWorld* World = GetWorld();
+	if (!World || !BobberToSpawn)
+	{
+		return nullptr;
+	}
+	return World->SpawnActor<AActor>(BobberToSpawn, SpawnLocation, SpawnRotation);
 }
 
