@@ -30,6 +30,13 @@
 		{
 			"Name": "GameplayStateTree",
 			"Enabled": true
+		},
+		{
+			"Name": "AudioGameSpeech",
+			"Enabled": true,
+			"PlatformAllowList": [
+				"Win64"
+			]
 		}
 	]
 }
