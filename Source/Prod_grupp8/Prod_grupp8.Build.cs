@@ -21,7 +21,7 @@ public class Prod_grupp8 : ModuleRules
 			"Slate"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Eigen" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Prod_grupp8",
