@@ -37,7 +37,7 @@ public:
 	
 	int32 dollars= 0;
 	
-	void OpenShop();
+	void ToggleShop();
 	void addDollars();
 
 protected:
@@ -53,7 +53,7 @@ private:
 	EShopSection CurrentSection = EShopSection::Inventory;
 
 	int32 CurrentIndex = 0;
-
+	bool shopEnabled = true;
 	void MoveLeft();
 	void MoveRight();
 	void MoveUp();

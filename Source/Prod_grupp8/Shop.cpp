@@ -23,49 +23,59 @@ void AShop::BeginPlay()
 	Super::BeginPlay();
 	
 	EnableInput(GetWorld()->GetFirstPlayerController());
-
-	InputComponent->BindKey(
-		EKeys::T,
-		IE_Pressed,
-		this,
-		&AShop::Transaction
-	);
 	
 	InputComponent->BindKey(
-		EKeys::E,
+		EKeys::I,
 		IE_Pressed,
 		this,
-		&AShop::addDollars
+		&AShop::ToggleShop
 	);
-	InputComponent->BindKey(
-		EKeys::Left,
-		IE_Pressed,
-		this,
-		&AShop::MoveLeft
-	);
+	
+	if (true)
+	{
+		InputComponent->BindKey(
+			EKeys::T,
+			IE_Pressed,
+			this,
+			&AShop::Transaction
+		);
+	
+		InputComponent->BindKey(
+			EKeys::E,
+			IE_Pressed,
+			this,
+			&AShop::addDollars
+		);
+		InputComponent->BindKey(
+			EKeys::Left,
+			IE_Pressed,
+			this,
+			&AShop::MoveLeft
+		);
 
-	InputComponent->BindKey(
-		EKeys::Right,
-		IE_Pressed,
-		this,
-		&AShop::MoveRight
-	);
+		InputComponent->BindKey(
+			EKeys::Right,
+			IE_Pressed,
+			this,
+			&AShop::MoveRight
+		);
 
-	InputComponent->BindKey(
-		EKeys::Up,
-		IE_Pressed,
-		this,
-		&AShop::MoveUp
-	);
+		InputComponent->BindKey(
+			EKeys::Up,
+			IE_Pressed,
+			this,
+			&AShop::MoveUp
+		);
 
-	InputComponent->BindKey(
-		EKeys::Down,
-		IE_Pressed,
-		this,
-		&AShop::MoveDown
-	);
+		InputComponent->BindKey(
+			EKeys::Down,
+			IE_Pressed,
+			this,
+			&AShop::MoveDown
+		);
 
-	PrintCurrentItem();
+		PrintCurrentItem();
+	}
 
 	
 	
@@ -103,6 +113,7 @@ void AShop::BeginPlay()
 void AShop::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 
 }
 
@@ -111,193 +122,244 @@ void AShop::addDollars()
 	dollars+= 100;
 	
 	UE_LOG(LogTemp, Warning, TEXT("Dollars: %d"), dollars);
+	GEngine->AddOnScreenDebugMessage(
+		3,
+		5.0f,
+		FColor::Yellow,
+		FString::Printf(
+		TEXT("Money: %d"),
+		dollars
+		)
+	);
 
 }
 
 void AShop::MoveLeft()
 {
-	CurrentSection = EShopSection::Inventory;
-	CurrentIndex = 0;
+	if (shopEnabled)
+	{
+		CurrentSection = EShopSection::Inventory;
+		CurrentIndex = 0;
 	
-	GEngine->AddOnScreenDebugMessage(
-		1,
-		5.0f,
-		FColor::Yellow,
-		FString::Printf(
-			TEXT("Money: %d"),
-			dollars
-		)
-	);
+		GEngine->AddOnScreenDebugMessage(
+			3,
+			5.0f,
+			FColor::Yellow,
+			FString::Printf(
+				TEXT("Money: %d"),
+				dollars
+			)
+		);
+	}
 
 	PrintCurrentItem();
 }
 
 void AShop::MoveRight()
 {
-	CurrentSection = EShopSection::Shop;
-	CurrentIndex = 0;
-	GEngine->AddOnScreenDebugMessage(
-		1,
-		5.0f,
-		FColor::Yellow,
-		FString::Printf(
-			TEXT("Money: %d"),
-			dollars
-		)
-	);
+	if (shopEnabled)
+	{
+		CurrentSection = EShopSection::Shop;
+		CurrentIndex = 0;
+		GEngine->AddOnScreenDebugMessage(
+			3,
+			5.0f,
+			FColor::Yellow,
+			FString::Printf(
+				TEXT("Money: %d"),
+				dollars
+			)
+		);
 
-	PrintCurrentItem();
+		PrintCurrentItem();
+	}
 }
 
 void AShop::MoveUp()
 {
-	if (CurrentIndex > 0)
+	if (shopEnabled)
 	{
-		CurrentIndex--;
-	}
+		if (CurrentIndex > 0)
+		{
+			CurrentIndex--;
+		}
 
-	PrintCurrentItem();
+		PrintCurrentItem();
+	}
 }
 void AShop::MoveDown()
 {
-	int32 ItemCount = 0;
-
-	if (CurrentSection == EShopSection::Inventory)
+	if (shopEnabled)
 	{
-		if (PlayerInventory)
+		int32 ItemCount = 0;
+
+		if (CurrentSection == EShopSection::Inventory)
 		{
-			ItemCount = PlayerInventory->Fish.Num();
+			if (PlayerInventory)
+			{
+				ItemCount = PlayerInventory->Fish.Num();
+			}
 		}
-	}
-	else
-	{
-		ItemCount = Rods.Num();
-	}
+		else
+		{
+			ItemCount = Rods.Num();
+		}
 
-	if (CurrentIndex < ItemCount - 1)
-	{
-		CurrentIndex++;
-	}
+		if (CurrentIndex < ItemCount - 1)
+		{
+			CurrentIndex++;
+		}
 
-	PrintCurrentItem();
+		PrintCurrentItem();
+	}
 }
 
 void AShop::PrintCurrentItem()
 {
-	if (!GEngine)
+	if (shopEnabled)
 	{
-		return;
-	}
-
-	if (CurrentSection == EShopSection::Inventory)
-	{
-		if (!PlayerInventory || PlayerInventory->Fish.Num() == 0)
+		if (!GEngine)
 		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				10.0f,
-				FColor::Red,
-				TEXT("Inventory is empty")
-			);
-
 			return;
 		}
 
-		AFish* CurrentFish = PlayerInventory->Fish[CurrentIndex];
-
-		if (CurrentFish)
+		if (CurrentSection == EShopSection::Inventory)
 		{
-			FString FishTypeName;
-
-			switch (CurrentFish->FishSpecies)
+			if (!PlayerInventory || PlayerInventory->Fish.Num() == 0)
 			{
-			case EFishType::Aborre:
-				FishTypeName = TEXT("Aborre");
-				break;
+				GEngine->AddOnScreenDebugMessage(
+					1,
+					10.0f,
+					FColor::Red,
+					TEXT("Inventory is empty")
+				);
 
-			case EFishType::Gadda:
-				FishTypeName = TEXT("Gädda");
-				break;
-
-			case EFishType::Gos:
-				FishTypeName = TEXT("Gös");
-				break;
-
-			case EFishType::Insjooring:
-				FishTypeName = TEXT("Insjööring");
-				break;
-
-			case EFishType::Roding:
-				FishTypeName = TEXT("Röding");
-				break;
-
-			case EFishType::Regnbage:
-				FishTypeName = TEXT("Regnbåge");
-				break;
-
-			case EFishType::Sik:
-				FishTypeName = TEXT("Sik");
-				break;
-
-			case EFishType::Lake:
-				FishTypeName = TEXT("Lake");
-				break;
-
-			case EFishType::Braxen:
-				FishTypeName = TEXT("Braxen");
-				break;
-
-			case EFishType::Sutare:
-				FishTypeName = TEXT("Sutare");
-				break;
-
-			default:
-				FishTypeName = TEXT("Unknown");
-				break;
+				return;
 			}
 
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				10.0f,
-				FColor::Green,
-				FString::Printf(
-					TEXT("INVENTORY: %s | Weight: %.2f kg"),
-					*FishTypeName,
-					CurrentFish->Weight
-				)
-			);
+			AFish* CurrentFish = PlayerInventory->Fish[CurrentIndex];
+
+			if (CurrentFish)
+			{
+				FString FishTypeName;
+
+				switch (CurrentFish->FishSpecies)
+				{
+				case EFishType::Aborre:
+					FishTypeName = TEXT("Aborre");
+					break;
+
+				case EFishType::Gadda:
+					FishTypeName = TEXT("Gädda");
+					break;
+
+				case EFishType::Gos:
+					FishTypeName = TEXT("Gös");
+					break;
+
+				case EFishType::Insjooring:
+					FishTypeName = TEXT("Insjööring");
+					break;
+
+				case EFishType::Roding:
+					FishTypeName = TEXT("Röding");
+					break;
+
+				case EFishType::Regnbage:
+					FishTypeName = TEXT("Regnbåge");
+					break;
+
+				case EFishType::Sik:
+					FishTypeName = TEXT("Sik");
+					break;
+
+				case EFishType::Lake:
+					FishTypeName = TEXT("Lake");
+					break;
+
+				case EFishType::Braxen:
+					FishTypeName = TEXT("Braxen");
+					break;
+
+				case EFishType::Sutare:
+					FishTypeName = TEXT("Sutare");
+					break;
+
+				default:
+					FishTypeName = TEXT("Unknown");
+					break;
+				}
+
+				GEngine->AddOnScreenDebugMessage(
+					1,
+					10.0f,
+					FColor::Green,
+					FString::Printf(
+						TEXT("INVENTORY: %s | Weight: %.2f kg"),
+						*FishTypeName,
+						CurrentFish->Weight
+					)
+				);
+			}
+		}
+		else
+		{
+			if (Rods.Num() == 0)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					1,
+					10.0f,
+					FColor::Red,
+					TEXT("Shop is empty")
+				);
+
+				return;
+			}
+
+			ARod* CurrentRod = Rods[CurrentIndex];
+
+			if (CurrentRod)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					1,
+					10.0f,
+					FColor::Green,
+					FString::Printf(
+					TEXT("Shop: %s | price: %d | luck: %d"),
+					*CurrentRod->name.ToString(),
+					CurrentRod->price,
+					CurrentRod->luck
+					)
+				);
+			}
 		}
 	}
-	else
+}
+
+void AShop::ToggleShop()
+{
+	AShop::shopEnabled = !AShop::shopEnabled;
+	
+	CurrentSection = EShopSection::Inventory;
+	CurrentIndex = 0;
+	
+	if (shopEnabled)
 	{
-		if (Rods.Num() == 0)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				10.0f,
-				FColor::Red,
-				TEXT("Shop is empty")
-			);
-
-			return;
-		}
-
-		ARod* CurrentRod = Rods[CurrentIndex];
-
-		if (CurrentRod)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				10.0f,
-				FColor::Green,
-				FString::Printf(
-				TEXT("Shop: %s | price: %d | luck: %d"),
-				*CurrentRod->name.ToString(),
-				CurrentRod->price,
-				CurrentRod->luck
-				)
-			);
-		}
+		GEngine->AddOnScreenDebugMessage(
+			1,
+			10.0f,
+			FColor::Blue,
+			TEXT("Shop Opened")
+		);
+	}
+	if (!shopEnabled)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			1,
+			10.0f,
+			FColor::Blue,
+			TEXT("Shop Closed")
+		);
 	}
 }
 
@@ -324,11 +386,12 @@ void AShop::Transaction()
 		}
 
 		int32 SellPrice = FMath::RoundToInt(CurrentFish->Weight);
-
+		
 
 		dollars += SellPrice;
 
 		PlayerInventory->RemoveFish(CurrentFish);
+		CurrentFish->Destroy();
 
 		GEngine->AddOnScreenDebugMessage(
 			2,
