@@ -71,10 +71,14 @@ protected:
 	
 	float caughtProgress = 0.0f;
 
-	
+	UPROPERTY()
+	TObjectPtr<AActor> Bobber;
 	
 public:
 	AProd_grupp8Character();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
+	TSubclassOf<AActor> BobberToSpawn;
 
 protected:
 
@@ -124,6 +128,8 @@ protected:
 	bool IsReeling();
 	
 	void Fishing(float deltaTime);
+	
+	AActor* SpawnBobber(FVector SpawnLocation);
 
 protected:
 
