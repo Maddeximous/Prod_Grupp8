@@ -402,6 +402,15 @@ void AShop::Transaction()
 				SellPrice
 			)
 		);
+		GEngine->AddOnScreenDebugMessage(
+			3,
+			5.0f,
+			FColor::Yellow,
+			FString::Printf(
+				TEXT("Money: %d"),
+				dollars
+			)
+		);
 
 		// Make sure the index is still valid
 		if (CurrentIndex >= PlayerInventory->Fish.Num())
@@ -466,6 +475,15 @@ void AShop::Transaction()
 				TEXT("BOUGHT %s FOR %d DOLLARS"),
 				*CurrentRod->name.ToString(),
 				RodPrice
+			)
+		);
+		GEngine->AddOnScreenDebugMessage(
+			3,
+			5.0f,
+			FColor::Yellow,
+			FString::Printf(
+				TEXT("Money: %d"),
+				dollars
 			)
 		);
 
