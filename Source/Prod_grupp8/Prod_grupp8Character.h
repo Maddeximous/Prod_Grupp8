@@ -73,11 +73,15 @@ protected:
 	
 	bool bIsFishOnHook = false;
 	
+	bool bFishIsFighting = false;
+	
 	FVector2d ReelStickPosition;
 
 	float ReelStickDegree;
 	
 	float caughtProgress = 0.0f;
+	
+	float FishFightTimer = 0.0f;
 
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;
@@ -149,6 +153,14 @@ protected:
 	void Fishing(float deltaTime);
 	
 	AActor* SpawnBobber(FVector SpawnLocation);
+	
+	void StartFishFighting();
+	
+	void FishFighting(float DeltaTime);
+	
+	void FishFightingLeft(float DeltaTime);
+	
+	void FishFightingRight(float DeltaTime);
 
 protected:
 

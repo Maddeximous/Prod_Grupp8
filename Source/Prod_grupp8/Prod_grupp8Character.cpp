@@ -132,7 +132,27 @@ void AProd_grupp8Character::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (bIsFishOnHook)
 	{
-		Fishing(DeltaTime);
+		if (bFishIsFighting)
+		{
+			FishFightTimer += DeltaTime;
+			if (FishFightTimer > 4)
+			{
+				bFishIsFighting = false;
+			}
+			
+			if (FMath::RandBool())
+			{
+				FishFightingLeft(DeltaTime);
+			}
+			else
+			{
+				FishFightingRight(DeltaTime);
+			}
+		}
+		else
+		{
+			Fishing(DeltaTime);
+		}
 	}
 }
 
@@ -238,6 +258,8 @@ void AProd_grupp8Character::OnHook()
 	bIsFishOnHook = true;
 	caughtProgress = 0.0f;
 	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
+	FTimerHandle UnusedHandle;
+	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
 }
 
 //(Under tiden man fiskar)
@@ -279,3 +301,23 @@ AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
 	return World->SpawnActor<AActor>(BobberToSpawn, SpawnLocation, SpawnRotation);
 }
 
+void AProd_grupp8Character::StartFishFighting()
+{
+	bFishIsFighting = true;
+	FishFightTimer = 0.0f;
+}
+
+void AProd_grupp8Character::FishFighting(float deltaTime)
+{
+	
+}
+
+void AProd_grupp8Character::FishFightingLeft(float deltaTime)
+{
+	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(100 * deltaTime,0,0));
+}
+
+void AProd_grupp8Character::FishFightingRight(float deltaTime)
+{
+	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(-100 * deltaTime,0,0));
+}
