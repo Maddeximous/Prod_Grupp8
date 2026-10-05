@@ -416,7 +416,7 @@ void USpeechSubsystem::SetSpeakingRate(float NewRate)
 
 void USpeechSubsystem::SetVolume(float NewVolume)
 {
-	Volume = FMath::Clamp(NewVolume, 0.f, 1.f);
+	Volume = FMath::Clamp(NewVolume, 0.f, 2.f);
 	if (IsValid(ActiveComponent))
 	{
 		ActiveComponent->SetVolumeMultiplier(Volume);
