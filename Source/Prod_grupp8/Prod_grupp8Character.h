@@ -69,6 +69,22 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* SwayLeftAction;
 	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* ThrowSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* OnHookSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* ReelInSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* CaughtSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Haptics")
+	class UForceFeedbackEffect* FishHapticEffect;
+	
+	
 	bool bIsFishing = false;
 	
 	bool bIsFishOnHook = false;

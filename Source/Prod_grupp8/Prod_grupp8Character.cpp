@@ -9,6 +9,7 @@
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Prod_grupp8.h"
+#include "Kismet/GameplayStatics.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
 {
@@ -236,8 +237,7 @@ void AProd_grupp8Character::DoCastLine()
 		if (!bIsFishing && FishInRange)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Fish"));
-		
-			//checka om vi kan fiska
+			
 			StartFishing();
 		}
 	}
@@ -250,6 +250,7 @@ void AProd_grupp8Character::StartFishing()
 	FTimerHandle UnusedHandle;
 	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
+	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
 }
 
 //När man har fått napp (innan fiske)
@@ -258,16 +259,19 @@ void AProd_grupp8Character::OnHook()
 	bIsFishOnHook = true;
 	caughtProgress = 0.0f;
 	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
-	FTimerHandle UnusedHandle;
-	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
+	//FTimerHandle UnusedHandle;
+	//GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
 }
 
 //(Under tiden man fiskar)
 void AProd_grupp8Character::Fishing(float deltaTime)
 {
+	
+	
 	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
 	{
 		
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(FishHapticEffect);
 		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
 		if (caughtProgress >= 100)
 		{
@@ -275,11 +279,13 @@ void AProd_grupp8Character::Fishing(float deltaTime)
 		}
 		UE_LOG(LogTemp, Warning, TEXT("%f"), caughtProgress);
 	}
+	
 }
 
 //När man fångat fisken (efter fiske)
 void AProd_grupp8Character::Caught()
 {
+	
 	bIsFishing = false;
 	bIsFishOnHook = false;
 	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
