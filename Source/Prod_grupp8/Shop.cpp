@@ -22,7 +22,16 @@ void AShop::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	EnableInput(GetWorld()->GetFirstPlayerController());
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (!PC)
+		return;
+
+	EnableInput(PC);
+	
+
+	if (!InputComponent)
+		return;
 	
 	InputComponent->BindKey(
 		EKeys::I,
@@ -114,6 +123,24 @@ void AShop::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	if (shopEnabled != previousShopEnabled)
+	{
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+		if (PC)
+		{
+			if (shopEnabled)
+			{
+				EnableInput(PC);
+			}
+			else
+			{
+				DisableInput(PC);
+			}
+		}
+
+		previousShopEnabled = shopEnabled;
+	}
 
 }
 

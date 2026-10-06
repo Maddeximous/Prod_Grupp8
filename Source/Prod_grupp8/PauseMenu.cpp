@@ -33,14 +33,14 @@ void APauseMenu::BeginPlay()
 		return;
 
 	InputComponent->BindKey(
-		EKeys::W,
+		EKeys::Up,
 		IE_Pressed,
 		this,
 		&APauseMenu::MoveUp
 	);
 
 	InputComponent->BindKey(
-		EKeys::S,
+		EKeys::Down,
 		IE_Pressed,
 		this,
 		&APauseMenu::MoveDown

@@ -26,6 +26,13 @@ public:
 	// Sets default values for this actor's properties
 	AShop();
 	
+	virtual void Tick(float DeltaTime) override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool shopEnabled = true;
+	
+	bool previousShopEnabled = true;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	AInventory* PlayerInventory;
 	
@@ -48,12 +55,10 @@ protected:
 
 private:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 	
 	EShopSection CurrentSection = EShopSection::Inventory;
 
 	int32 CurrentIndex = 0;
-	bool shopEnabled = true;
 	void MoveLeft();
 	void MoveRight();
 	void MoveUp();
