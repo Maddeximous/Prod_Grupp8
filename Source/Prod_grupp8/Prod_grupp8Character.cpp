@@ -289,6 +289,7 @@ void AProd_grupp8Character::Fishing(float deltaTime)
 {
 	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
 	{
+		ReelSoundTimer = 0.0f;
 		if (ReelInSoundCueObject && !bReelSoundActive)
 		{
 			bReelSoundActive = true;
@@ -305,8 +306,15 @@ void AProd_grupp8Character::Fishing(float deltaTime)
 	}
 	else if (ReelInSoundCueObject && bReelSoundActive)
 	{
-		bReelSoundActive = false;
-		ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
+		if (ReelSoundTimer >= 0.6)
+		{
+			bReelSoundActive = false;
+			ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
+		}
+		else
+		{
+			ReelSoundTimer += deltaTime;
+		}
 	}
 	
 }
@@ -331,6 +339,7 @@ void AProd_grupp8Character::Caught()
 		Bobber -> Destroy();
 	}
 	FishManager -> OnFishCaught(FishInRange);
+	FishCaught++;
 	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
 	//Bobber -> Destroy();
 }
