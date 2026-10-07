@@ -339,6 +339,7 @@ void AProd_grupp8Character::Caught()
 		Bobber -> Destroy();
 	}
 	FishManager -> OnFishCaught(FishInRange);
+	FishCaught++;
 	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
 	//Bobber -> Destroy();
 }

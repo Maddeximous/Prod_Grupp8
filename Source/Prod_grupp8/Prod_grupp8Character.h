@@ -107,7 +107,7 @@ protected:
 	float FishFightTimer = 0.0f;
 	
 	float ReelSoundTimer = 0.0f;
-
+	
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;
 	
@@ -122,6 +122,8 @@ public:
 	
 	UPROPERTY()
 	TObjectPtr<AFish> FishInRange;
+	
+	int FishCaught = 0;
 	
 	
 
