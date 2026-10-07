@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "FishTypes.h"
+#include "Components/BoxComponent.h" 
 #include "FishManager.generated.h"
+
 
 UCLASS()
 class PROD_GRUPP8_API AFishManager : public AActor
@@ -16,17 +18,26 @@ public:
 	// Sets default values for this actor's properties
 	AFishManager();
 	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Components")
+	UBoxComponent* SpawnAreaBox;
+	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
 	TMap<EFishType, FFishData> FishDataBase;
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
 	TSubclassOf<class AFish> FishToSpawn;
 	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
+	int MaxAmountOfFish;
+	
 	UPROPERTY(EditAnywhere, Category = "FishData")
-	TArray<FVector> SpawnLocations;
+	TArray<AFish*> SpawnedFish;
 	
 	UFUNCTION(BlueprintCallable, Category = "Fishing")
 	void OnFishCaught(AFish* CaughtFish);
+	
+	UFUNCTION(BlueprintCallable, Category = "Fishing")
+	AFish* GetClosestFishToPlayer();
 	
 	void SpawnInitialFish();
 	
