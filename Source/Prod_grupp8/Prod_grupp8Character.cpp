@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Prod_grupp8.h"
 #include "Kismet/GameplayStatics.h"
+#include "OnboardingSubsystem.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
 {
@@ -164,6 +165,7 @@ void AProd_grupp8Character::DoSonar()
 		if (!bIsFishing)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pling"));
+			UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("SonarPinged"));
 		}
 	}
 }
@@ -289,6 +291,7 @@ void AProd_grupp8Character::Caught()
 	bIsFishing = false;
 	bIsFishOnHook = false;
 	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
+	UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("FishCaught"));
 	if (Bobber)
 	{
 		Bobber -> Destroy();

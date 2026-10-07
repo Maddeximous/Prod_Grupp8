@@ -8,6 +8,7 @@
 #include "Sound/SoundBase.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Prod_grupp8Character.h"
+#include "OnboardingSubsystem.h"
 
 // Sets default values
 AFish::AFish()
@@ -74,6 +75,7 @@ void AFish::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	{
 		bCanFish = true;
 		UE_LOG(LogTemp, Warning, TEXT("Can Fish!"));
+		UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("ShoalReached"));
 		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
 		{
 			Player->FishInRange = this;
