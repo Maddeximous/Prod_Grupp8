@@ -34,9 +34,6 @@ public:
 	TArray<AFish*> SpawnedFish;
 	
 	UFUNCTION(BlueprintCallable, Category = "Fishing")
-	void OnFishCaught(AFish* CaughtFish);
-	
-	UFUNCTION(BlueprintCallable, Category = "Fishing")
 	AFish* GetClosestFishToPlayer();
 	
 	void SpawnInitialFish();
@@ -54,6 +51,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	void PlaySoundOnClosestFish(USoundBase* SoundToPlay);
+	
+	UFUNCTION(BlueprintCallable, Category = "Fishing")
+	void OnFishCaught(AFish* CaughtFish);
 	
 private:
 	FTimerHandle RespawnTimerHandle;

@@ -79,7 +79,10 @@ protected:
 	class USoundBase* ReelInSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Audio")
-	class USoundBase* CaughtSoundCue;
+	class USoundBase* CaughtSound;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* SonarSound;
 	
 	UPROPERTY(EditAnywhere, Category ="Haptics")
 	class UForceFeedbackEffect* FishHapticEffect;

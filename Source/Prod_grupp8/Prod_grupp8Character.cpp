@@ -167,7 +167,7 @@ void AProd_grupp8Character::DoSonar()
 		if (!bIsFishing)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pling"));
-			FishManager -> GetClosestFishToPlayer();
+			FishManager -> PlaySoundOnClosestFish(SonarSound);
 		}
 	}
 }
@@ -297,6 +297,7 @@ void AProd_grupp8Character::Caught()
 	{
 		Bobber -> Destroy();
 	}
+	FishManager -> OnFishCaught(FishInRange);
 	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
 	//Bobber -> Destroy();
 }
