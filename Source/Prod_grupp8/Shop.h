@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Rod.h"
 #include "Inventory.h"
+#include "SpeechSubsystem.h"
 #include "Shop.generated.h"
 
 class AInventory;
@@ -46,6 +47,7 @@ public:
 	
 	void ToggleShop();
 	void addDollars();
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -58,7 +60,9 @@ private:
 	
 	EShopSection CurrentSection = EShopSection::Inventory;
 
+	
 	int32 CurrentIndex = 0;
+	bool skipVoice= false;
 	void MoveLeft();
 	void MoveRight();
 	void MoveUp();

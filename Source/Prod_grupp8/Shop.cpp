@@ -165,6 +165,7 @@ void AShop::addDollars()
 
 void AShop::MoveLeft()
 {
+	skipVoice= false;
 	if (shopEnabled)
 	{
 		CurrentSection = EShopSection::Inventory;
@@ -186,6 +187,7 @@ void AShop::MoveLeft()
 
 void AShop::MoveRight()
 {
+	skipVoice= false;
 	if (shopEnabled)
 	{
 		CurrentSection = EShopSection::Shop;
@@ -336,6 +338,7 @@ void AShop::PrintCurrentItem()
 				{
 					return;
 				}
+				Speech->StopSpeaking();
 
 				// false = wait in line, don't cut off current speech
 				Speech->Speak(
@@ -387,12 +390,12 @@ void AShop::PrintCurrentItem()
 			{
 				return;
 			}
-
+			Speech->StopSpeaking();
 			// false = wait in line, don't cut off current speech
 			Speech->Speak(
 				FText::FromString(
 				FString::Printf(
-				TEXT("Fiskespö: %s | pris: %d | kronor kvalitet: %d"),
+				TEXT(": %s | pris: %d | kronor kvalitet: %d | procent"),
 				*CurrentRod->name.ToString(),
 				CurrentRod->price,
 				CurrentRod->luck
@@ -425,7 +428,7 @@ void AShop::ToggleShop()
 		{
 			return;
 		}
-
+		Speech->StopSpeaking();
 		// false = wait in line, don't cut off current speech
 		Speech->Speak(
 			FText::FromString(
@@ -453,6 +456,7 @@ void AShop::ToggleShop()
 		}
 
 		// false = wait in line, don't cut off current speech
+		Speech->StopSpeaking();
 		Speech->Speak(
 			FText::FromString(
 			FString::Printf(
@@ -510,6 +514,7 @@ void AShop::Transaction()
 		{
 			return;
 		}
+		Speech->StopSpeaking();
 
 		// false = wait in line, don't cut off current speech
 		Speech->Speak(
@@ -579,7 +584,7 @@ void AShop::Transaction()
 			{
 				return;
 			}
-
+			Speech->StopSpeaking();
 			// false = wait in line, don't cut off current speech
 			Speech->Speak(
 				FText::FromString(
@@ -588,7 +593,7 @@ void AShop::Transaction()
 				
 					)
 					),
-						false
+					false
 			);
 			return;
 		}
@@ -630,7 +635,7 @@ void AShop::Transaction()
 		{
 			return;
 		}
-
+		Speech->StopSpeaking();
 		// false = wait in line, don't cut off current speech
 		Speech->Speak(
 			FText::FromString(
