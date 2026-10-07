@@ -13,6 +13,8 @@
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "GameTelemetry.h"
+#include "../../../../../../../Program Files/Epic Games/UE_5.8/Engine/Plugins/Media/AjaMedia/Source/AjaMedia/Private/Shared/AjaMediaAllowPlatformTypes.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
 {
@@ -176,6 +178,10 @@ void AProd_grupp8Character::DoSonar()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pling"));
 			FishManager -> PlaySoundOnClosestFish(SonarSoundCue);
+			if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+			{
+				Telemetry->RecordAButtonPress();
+			}
 		}
 	}
 }
@@ -283,6 +289,10 @@ void AProd_grupp8Character::OnHook()
 	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
 	//FTimerHandle UnusedHandle;
 	//GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
+	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+	{
+		Telemetry->StartReeling();
+	}
 }
 
 //(Under tiden man fiskar)
@@ -343,6 +353,10 @@ void AProd_grupp8Character::Caught()
 	FishCaught++;
 	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
 	//Bobber -> Destroy();
+	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+	{
+		Telemetry->EndReeling(TRUE);
+	}
 }
 
 AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){

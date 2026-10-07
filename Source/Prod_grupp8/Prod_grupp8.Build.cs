@@ -18,7 +18,8 @@ public class Prod_grupp8 : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
+			"Slate",
+            "Json"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
