@@ -105,6 +105,8 @@ protected:
 	float caughtProgress = 0.0f;
 	
 	float FishFightTimer = 0.0f;
+	
+	float ReelSoundTimer = 0.0f;
 
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;
