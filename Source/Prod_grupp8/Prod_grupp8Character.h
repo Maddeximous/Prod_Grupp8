@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "FishManager.h"
 #include "Prod_grupp8Character.generated.h"
 
 class UInputComponent;
@@ -117,13 +118,14 @@ protected:
 public:
 	AProd_grupp8Character();
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	int FishCaught = 0;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	TSubclassOf<AActor> BobberToSpawn;
 	
 	UPROPERTY()
 	TObjectPtr<AFish> FishInRange;
-	
-	int FishCaught = 0;
 	
 	
 

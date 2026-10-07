@@ -90,15 +90,7 @@ void AProd_grupp8Character::BeginPlay()
 
 	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
 
-	if (ReelInSoundCue)
-	{
-		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
-		
-		if (ReelInSoundCueObject)
-		{
-			ReelInSoundCueObject->Stop();
-		}
-	}
+	
 }
 
 void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
@@ -271,6 +263,15 @@ void AProd_grupp8Character::StartFishing()
 	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
 	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
+	if (ReelInSoundCue)
+	{
+		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
+		
+		if (ReelInSoundCueObject)
+		{
+			ReelInSoundCueObject->Stop();
+		}
+	}
 }
 
 //När man har fått napp (innan fiske)
