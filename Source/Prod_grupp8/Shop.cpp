@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h"
 #include "InputCoreTypes.h"
+#include "SpeechSubsystem.h"
 
 // Sets default values
 AShop::AShop()
@@ -21,6 +22,7 @@ AShop::AShop()
 void AShop::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 
@@ -327,6 +329,25 @@ void AShop::PrintCurrentItem()
 						CurrentFish->Weight
 					)
 				);
+				
+				UGameInstance* GI = GetGameInstance();
+				USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
+				if (!Speech)
+				{
+					return;
+				}
+
+				// false = wait in line, don't cut off current speech
+				Speech->Speak(
+					FText::FromString(
+					FString::Printf(
+						TEXT("    : %s, : %.2f kilo"),
+						*FishTypeName,
+						CurrentFish->Weight
+						)
+						),
+						false
+				);
 			}
 		}
 		else
@@ -359,6 +380,26 @@ void AShop::PrintCurrentItem()
 					)
 				);
 			}
+			
+			UGameInstance* GI = GetGameInstance();
+			USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
+			if (!Speech)
+			{
+				return;
+			}
+
+			// false = wait in line, don't cut off current speech
+			Speech->Speak(
+				FText::FromString(
+				FString::Printf(
+				TEXT("Fiskespö: %s | pris: %d | kronor kvalitet: %d"),
+				*CurrentRod->name.ToString(),
+				CurrentRod->price,
+				CurrentRod->luck
+					)
+					),
+					false
+			);
 		}
 	}
 }
@@ -378,6 +419,23 @@ void AShop::ToggleShop()
 			FColor::Blue,
 			TEXT("Shop Opened")
 		);
+		UGameInstance* GI = GetGameInstance();
+		USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
+		if (!Speech)
+		{
+			return;
+		}
+
+		// false = wait in line, don't cut off current speech
+		Speech->Speak(
+			FText::FromString(
+			FString::Printf(
+			TEXT("Butiken öppnad")
+			
+				)
+				),
+				false
+		);
 	}
 	if (!shopEnabled)
 	{
@@ -386,6 +444,23 @@ void AShop::ToggleShop()
 			10.0f,
 			FColor::Blue,
 			TEXT("Shop Closed")
+		);
+		UGameInstance* GI = GetGameInstance();
+		USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
+		if (!Speech)
+		{
+			return;
+		}
+
+		// false = wait in line, don't cut off current speech
+		Speech->Speak(
+			FText::FromString(
+			FString::Printf(
+			TEXT("Butiken stängd")
+			
+				)
+				),
+				false
 		);
 	}
 }
@@ -428,6 +503,32 @@ void AShop::Transaction()
 				TEXT("SOLD FISH FOR %d DOLLARS"),
 				SellPrice
 			)
+		);
+		UGameInstance* GI = GetGameInstance();
+		USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
+		if (!Speech)
+		{
+			return;
+		}
+
+		// false = wait in line, don't cut off current speech
+		Speech->Speak(
+			FText::FromString(
+			FString::Printf(
+			TEXT("Sålde fisk för %d kronor"),
+				SellPrice
+				)
+				),
+				false
+		);
+		Speech->Speak(
+			FText::FromString(
+			FString::Printf(
+			TEXT("Du har: %d kronor"),
+				dollars
+				)
+				),
+				false
 		);
 		GEngine->AddOnScreenDebugMessage(
 			3,
@@ -472,9 +573,27 @@ void AShop::Transaction()
 				FColor::Red,
 				TEXT("NOT ENOUGH MONEY")
 			);
+			UGameInstance* GI = GetGameInstance();
+			USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
+			if (!Speech)
+			{
+				return;
+			}
 
+			// false = wait in line, don't cut off current speech
+			Speech->Speak(
+				FText::FromString(
+				FString::Printf(
+				TEXT("För lite pengar")
+				
+					)
+					),
+						false
+			);
 			return;
 		}
+		
+		
 
 		ARod* NewRod = GetWorld()->SpawnActor<ARod>(
 			ARod::StaticClass(),
@@ -503,6 +622,34 @@ void AShop::Transaction()
 				*CurrentRod->name.ToString(),
 				RodPrice
 			)
+		);
+		
+		UGameInstance* GI = GetGameInstance();
+		USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
+		if (!Speech)
+		{
+			return;
+		}
+
+		// false = wait in line, don't cut off current speech
+		Speech->Speak(
+			FText::FromString(
+			FString::Printf(
+			TEXT("Köpte %s för %d kronor"),
+				*CurrentRod->name.ToString(),
+				RodPrice
+				)
+				),
+				false
+		);
+		Speech->Speak(
+			FText::FromString(
+			FString::Printf(
+			TEXT("Du har: %d kronor"),
+				dollars
+				)
+				),
+				false
 		);
 		GEngine->AddOnScreenDebugMessage(
 			3,
