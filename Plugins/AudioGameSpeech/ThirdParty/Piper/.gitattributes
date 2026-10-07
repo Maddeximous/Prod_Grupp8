@@ -1,0 +1,2 @@
+# Piper/espeak data must stay byte-identical (no CRLF conversion).
+* -text

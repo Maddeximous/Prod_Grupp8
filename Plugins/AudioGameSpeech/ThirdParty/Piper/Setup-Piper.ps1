@@ -1,6 +1,6 @@
 # Downloads Piper (offline TTS) and the Swedish voice into this folder.
-# Run once after cloning:  powershell -ExecutionPolicy Bypass -File Setup-Piper.ps1
-# The files are git-ignored (too big / binaries). Packaged builds include them automatically.
+# The files are committed to git, so normally you do NOT need this.
+# Only run it to repair a broken/missing install:  powershell -ExecutionPolicy Bypass -File Setup-Piper.ps1
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"   # much faster downloads
@@ -11,7 +11,7 @@ $VoiceUrl = "https://huggingface.co/rhasspy/piper-voices/resolve/main/sv/sv_SE/n
 $Voice    = "sv_SE-nst-medium"
 
 # 1. Piper program (piper.exe, DLLs, espeak-ng-data)
-if (-not (Test-Path "$Here\piper.exe")) {
+if (-not (Test-Path "$Here\piper.exe") -or -not (Test-Path "$Here\espeak-ng-data\phontab")) {
     Write-Host "Downloading Piper..."
     $Zip = Join-Path $env:TEMP "piper_windows_amd64.zip"
     Invoke-WebRequest $PiperZip -OutFile $Zip

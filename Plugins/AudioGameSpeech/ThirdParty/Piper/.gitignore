@@ -1,4 +1,5 @@
-# Downloaded by Setup-Piper.ps1 (binaries + 60 MB voice). Keep only the script in git.
-*
-!.gitignore
-!Setup-Piper.ps1
+# Piper is committed so a fresh clone speaks with no setup (root .gitignore ignores *.exe/*.dll).
+!*.exe
+!*.dll
+pkgconfig/
+libtashkeel_model.ort

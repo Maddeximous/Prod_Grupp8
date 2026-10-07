@@ -12,7 +12,7 @@ public class AudioGameSpeech : ModuleRules
 		if (Target.Platform == UnrealTargetPlatform.Win64)
 		{
 			// Piper (built-in voice): ship piper.exe, its DLLs, espeak data and voices with packaged builds.
-			// Missing? Run ThirdParty/Piper/Setup-Piper.ps1
+			// Committed to git. Missing? Run ThirdParty/Piper/Setup-Piper.ps1
 			string PiperDir = System.IO.Path.Combine(PluginDirectory, "ThirdParty", "Piper");
 			if (System.IO.File.Exists(System.IO.Path.Combine(PiperDir, "piper.exe")))
 			{

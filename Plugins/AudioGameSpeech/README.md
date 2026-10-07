@@ -34,15 +34,14 @@ cutscene descriptions, gameplay announcements) goes through this plugin.
 
 ## 1. Quick start
 
-**After cloning the repo (once per computer):**
+**Nothing to install.** `piper.exe`, its DLLs, `espeak-ng-data/` and the Swedish voice
+`sv_SE-nst-medium` (~60 MB) are committed in `ThirdParty/Piper/`, so a normal pull is enough.
+
+If the files are ever missing or broken (log says `Piper not found`), repair them with:
 
 ```
 powershell -ExecutionPolicy Bypass -File Plugins/AudioGameSpeech/ThirdParty/Piper/Setup-Piper.ps1
 ```
-
-This downloads `piper.exe`, its DLLs, `espeak-ng-data/` and the Swedish voice
-`sv_SE-nst-medium` (~60 MB) into `ThirdParty/Piper/`. These files are **git-ignored**
-(binaries and too big for git), so every coder has to run the script.
 
 Then build the project as usual. The plugin is already enabled in `Prod_grupp8.uproject`.
 
@@ -174,7 +173,7 @@ It's safe to call `Speak` from inside these events.
 AudioGameSpeech/
 ├─ AudioGameSpeech.uplugin
 ├─ ThirdParty/Piper/
-│  ├─ Setup-Piper.ps1             Downloads Piper + Swedish voice (only this file is in git)
+│  ├─ Setup-Piper.ps1             Re-downloads Piper + Swedish voice (repair only)
 │  └─ (piper.exe, DLLs, espeak-ng-data/, voices/)   after running the script
 └─ Source/AudioGameSpeech/
    ├─ AudioGameSpeech.Build.cs     Build settings, ships Piper files in packaged builds
@@ -339,7 +338,7 @@ display name `Piper <speaker>`. Also add the download to `Setup-Piper.ps1`.
 builds include them automatically (`*.exe`, `*.dll`, `espeak-ng-data/`, `voices/*.onnx`,
 `voices/*.onnx.json`). Adds ~80 MB to the game.
 
-**The build machine must have run `Setup-Piper.ps1`**, otherwise the package has no Piper
+If the Piper files are missing on the build machine, the package has no Piper
 and falls back to Windows voices. Test a packaged build now and then.
 
 ---
@@ -409,4 +408,4 @@ without duration info (cutscene timing must handle that).
   voice path.
 - **All text in string tables** (Swedish now, more languages later).
 - Speech keeps playing while the game is paused (by design, for menus).
-- Don't commit Piper binaries or voices. Update `Setup-Piper.ps1` instead.
+- Piper binaries and the voice are committed on purpose (no Git LFS). Keep each file < 100 MB (GitHub limit).
