@@ -16,13 +16,15 @@ ASpeechTestActor::ASpeechTestActor()
 void ASpeechTestActor::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	USpeechSubsystem* Speech = GetSpeech();
 	if (!Speech)
 	{
 		Report(TEXT("Speech test: no SpeechSubsystem (is the plugin enabled?)"), FColor::Red);
 		return;
 	}
+	
+	Speech->SetVolume(2);
 
 	const TArray<FSpeechVoice> Voices = Speech->GetVoices(false);
 	Report(FString::Printf(TEXT("Speech test: %d voices installed"), Voices.Num()));

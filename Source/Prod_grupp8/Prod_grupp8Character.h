@@ -69,15 +69,35 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* SwayLeftAction;
 	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* ThrowSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* OnHookSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* ReelInSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* CaughtSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Haptics")
+	class UForceFeedbackEffect* FishHapticEffect;
+	
+	
 	bool bIsFishing = false;
 	
 	bool bIsFishOnHook = false;
+	
+	bool bFishIsFighting = false;
 	
 	FVector2d ReelStickPosition;
 
 	float ReelStickDegree;
 	
 	float caughtProgress = 0.0f;
+	
+	float FishFightTimer = 0.0f;
 
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;
@@ -87,6 +107,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	TSubclassOf<AActor> BobberToSpawn;
+	
+	UPROPERTY()
+	TObjectPtr<AFish> FishInRange;
 
 protected:
 
@@ -146,6 +169,14 @@ protected:
 	void Fishing(float deltaTime);
 	
 	AActor* SpawnBobber(FVector SpawnLocation);
+	
+	void StartFishFighting();
+	
+	void FishFighting(float DeltaTime);
+	
+	void FishFightingLeft(float DeltaTime);
+	
+	void FishFightingRight(float DeltaTime);
 
 protected:
 

@@ -9,6 +9,7 @@
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Prod_grupp8.h"
+#include "Kismet/GameplayStatics.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
 {
@@ -132,7 +133,27 @@ void AProd_grupp8Character::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (bIsFishOnHook)
 	{
-		Fishing(DeltaTime);
+		if (bFishIsFighting)
+		{
+			FishFightTimer += DeltaTime;
+			if (FishFightTimer > 4)
+			{
+				bFishIsFighting = false;
+			}
+			
+			if (FMath::RandBool())
+			{
+				FishFightingLeft(DeltaTime);
+			}
+			else
+			{
+				FishFightingRight(DeltaTime);
+			}
+		}
+		else
+		{
+			Fishing(DeltaTime);
+		}
 	}
 }
 
@@ -213,11 +234,10 @@ void AProd_grupp8Character::DoCastLine()
 {
 	if (GetController())
 	{
-		if (!bIsFishing)
+		if (!bIsFishing && FishInRange)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Fish"));
-		
-			//checka om vi kan fiska
+			
 			StartFishing();
 		}
 	}
@@ -230,6 +250,7 @@ void AProd_grupp8Character::StartFishing()
 	FTimerHandle UnusedHandle;
 	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
+	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
 }
 
 //När man har fått napp (innan fiske)
@@ -238,14 +259,19 @@ void AProd_grupp8Character::OnHook()
 	bIsFishOnHook = true;
 	caughtProgress = 0.0f;
 	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
+	//FTimerHandle UnusedHandle;
+	//GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
 }
 
 //(Under tiden man fiskar)
 void AProd_grupp8Character::Fishing(float deltaTime)
 {
+	
+	
 	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
 	{
 		
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(FishHapticEffect);
 		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
 		if (caughtProgress >= 100)
 		{
@@ -253,11 +279,13 @@ void AProd_grupp8Character::Fishing(float deltaTime)
 		}
 		UE_LOG(LogTemp, Warning, TEXT("%f"), caughtProgress);
 	}
+	
 }
 
 //När man fångat fisken (efter fiske)
 void AProd_grupp8Character::Caught()
 {
+	
 	bIsFishing = false;
 	bIsFishOnHook = false;
 	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
@@ -279,3 +307,23 @@ AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
 	return World->SpawnActor<AActor>(BobberToSpawn, SpawnLocation, SpawnRotation);
 }
 
+void AProd_grupp8Character::StartFishFighting()
+{
+	bFishIsFighting = true;
+	FishFightTimer = 0.0f;
+}
+
+void AProd_grupp8Character::FishFighting(float deltaTime)
+{
+	
+}
+
+void AProd_grupp8Character::FishFightingLeft(float deltaTime)
+{
+	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(100 * deltaTime,0,0));
+}
+
+void AProd_grupp8Character::FishFightingRight(float deltaTime)
+{
+	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(-100 * deltaTime,0,0));
+}
