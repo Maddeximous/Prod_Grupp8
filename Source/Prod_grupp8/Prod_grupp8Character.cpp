@@ -10,7 +10,9 @@
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Prod_grupp8.h"
+#include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
 {
@@ -44,8 +46,6 @@ AProd_grupp8Character::AProd_grupp8Character()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
-	
-	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
 }
 
 void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -82,6 +82,22 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	else
 	{
 		UE_LOG(LogProd_grupp8, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+	}
+}
+void AProd_grupp8Character::BeginPlay()
+{
+	Super::BeginPlay();
+
+	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
+
+	if (ReelInSoundCue)
+	{
+		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
+		
+		if (ReelInSoundCueObject)
+		{
+			ReelInSoundCueObject->Stop();
+		}
 	}
 }
 
@@ -167,7 +183,7 @@ void AProd_grupp8Character::DoSonar()
 		if (!bIsFishing)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pling"));
-			FishManager -> PlaySoundOnClosestFish(SonarSound);
+			FishManager -> PlaySoundOnClosestFish(SonarSoundCue);
 		}
 	}
 }
@@ -262,6 +278,7 @@ void AProd_grupp8Character::OnHook()
 {
 	bIsFishOnHook = true;
 	caughtProgress = 0.0f;
+	UGameplayStatics::PlaySound2D(this, OnHookSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
 	//FTimerHandle UnusedHandle;
 	//GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
@@ -270,10 +287,13 @@ void AProd_grupp8Character::OnHook()
 //(Under tiden man fiskar)
 void AProd_grupp8Character::Fishing(float deltaTime)
 {
-	
-	
 	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
 	{
+		if (ReelInSoundCueObject && !bReelSoundActive)
+		{
+			bReelSoundActive = true;
+			ReelInSoundCueObject->FadeIn(0.2f, 1.0f);
+		}
 		
 		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(FishHapticEffect);
 		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
@@ -282,6 +302,11 @@ void AProd_grupp8Character::Fishing(float deltaTime)
 			Caught();
 		}
 		UE_LOG(LogTemp, Warning, TEXT("%f"), caughtProgress);
+	}
+	else if (ReelInSoundCueObject && bReelSoundActive)
+	{
+		bReelSoundActive = false;
+		ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
 	}
 	
 }
@@ -292,6 +317,14 @@ void AProd_grupp8Character::Caught()
 	
 	bIsFishing = false;
 	bIsFishOnHook = false;
+	
+	if (ReelInSoundCueObject && bReelSoundActive)
+	{
+		bReelSoundActive = false;
+		ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
+	}
+	
+	UGameplayStatics::PlaySound2D(this, CaughtSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
 	if (Bobber)
 	{

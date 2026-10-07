@@ -79,14 +79,16 @@ protected:
 	class USoundBase* ReelInSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Audio")
-	class USoundBase* CaughtSound;
+	class USoundBase* CaughtSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Audio")
-	class USoundBase* SonarSound;
+	class USoundBase* SonarSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Haptics")
 	class UForceFeedbackEffect* FishHapticEffect;
 	
+	UPROPERTY()
+	UAudioComponent* ReelInSoundCueObject;
 	
 	bool bIsFishing = false;
 	
@@ -94,9 +96,11 @@ protected:
 	
 	bool bFishIsFighting = false;
 	
-	FVector2d ReelStickPosition;
+	bool bReelSoundActive = false;
+	
+	FVector2d ReelStickPosition = FVector2d::ZeroVector;
 
-	float ReelStickDegree;
+	float ReelStickDegree = 0.0f;
 	
 	float caughtProgress = 0.0f;
 	
@@ -116,8 +120,11 @@ public:
 	
 	UPROPERTY()
 	TObjectPtr<AFish> FishInRange;
+	
+	
 
 protected:
+	virtual void BeginPlay() override;
 
 	/** Called from Input Actions for movement input */
 	void MoveInput(const FInputActionValue& Value);
