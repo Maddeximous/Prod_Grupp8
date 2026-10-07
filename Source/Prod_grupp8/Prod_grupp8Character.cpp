@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
+#include "FishManager.h"
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Prod_grupp8.h"
@@ -43,6 +44,8 @@ AProd_grupp8Character::AProd_grupp8Character()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
+	
+	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
 }
 
 void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -164,6 +167,7 @@ void AProd_grupp8Character::DoSonar()
 		if (!bIsFishing)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pling"));
+			FishManager -> GetClosestFishToPlayer();
 		}
 	}
 }

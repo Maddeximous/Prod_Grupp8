@@ -102,6 +102,9 @@ protected:
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;
 	
+	UPROPERTY()
+	TObjectPtr<AFishManager> FishManager;
+	
 public:
 	AProd_grupp8Character();
 	
