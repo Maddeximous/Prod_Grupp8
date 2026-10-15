@@ -22,6 +22,8 @@ public:
 	bool bPreviousPaused = false;
 	
 	bool IsPaused() const;
+	
+	void TogglePauseMenu();
 
 	
 private:
@@ -32,7 +34,6 @@ private:
 	
 	TArray<int32> MenuHistory;
 	
-	void TogglePauseMenu();
 	
 	void MoveUp();
 	void MoveDown();
