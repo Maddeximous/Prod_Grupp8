@@ -13,9 +13,23 @@
 // Sets default values
 AShop::AShop()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+	ShopSphere = CreateDefaultSubobject<USphereComponent>(
+		TEXT("ShopSphere"));
+
+	RootComponent = ShopSphere;
+
+	ShopSphere->SetSphereRadius(200.0f);
+
+	ShopSphere->SetCollisionEnabled(
+		ECollisionEnabled::QueryOnly);
+
+	ShopSphere->SetCollisionResponseToAllChannels(
+		ECR_Ignore);
+
+	ShopSphere->SetCollisionResponseToChannel(
+		ECC_Pawn, ECR_Overlap);
 }
 
 // Called when the game starts or when spawned

@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Rod.h"
 #include "Inventory.h"
+#include "Components/SphereComponent.h"
 #include "SpeechSubsystem.h"
 #include "Shop.generated.h"
 
@@ -51,6 +52,8 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shop")
+	USphereComponent* ShopSphere;
 	virtual void BeginPlay() override;
 	
 	
