@@ -5,6 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "FishManager.h"
+#include "PauseMenu.h"
+#include "Inventory.h"
+#include "Shop.h"
 #include "Prod_grupp8Character.generated.h"
 
 class UInputComponent;
@@ -69,6 +73,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* SwayLeftAction;
 	
+	/** Sonar Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* OpenPauseMenuAction;
+	
+	
 	UPROPERTY(EditAnywhere, Category ="Audio")
 	class USoundBase* ThrowSoundCue;
 	
@@ -81,9 +90,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Audio")
 	class USoundBase* CaughtSoundCue;
 	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* SonarSoundCue;
+	
 	UPROPERTY(EditAnywhere, Category ="Haptics")
 	class UForceFeedbackEffect* FishHapticEffect;
 	
+	UPROPERTY()
+	UAudioComponent* ReelInSoundCueObject;
 	
 	bool bIsFishing = false;
 	
@@ -91,27 +105,47 @@ protected:
 	
 	bool bFishIsFighting = false;
 	
-	FVector2d ReelStickPosition;
+	bool bReelSoundActive = false;
+	
+	FVector2d ReelStickPosition = FVector2d::ZeroVector;
 
-	float ReelStickDegree;
+	float ReelStickDegree = 0.0f;
 	
 	float caughtProgress = 0.0f;
 	
 	float FishFightTimer = 0.0f;
-
+	
+	float ReelSoundTimer = 0.0f;
+	
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;
 	
+	UPROPERTY()
+	TObjectPtr<AFishManager> FishManager;
+	
+	UPROPERTY()
+	TObjectPtr<APauseMenu> PauseMenu;
+
+	
 public:
 	AProd_grupp8Character();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	int FishCaught = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	TSubclassOf<AActor> BobberToSpawn;
 	
 	UPROPERTY()
 	TObjectPtr<AFish> FishInRange;
+	
+	UPROPERTY()
+	TObjectPtr<AShop> ShopInRange;
+	
+	
 
 protected:
+	virtual void BeginPlay() override;
 
 	/** Called from Input Actions for movement input */
 	void MoveInput(const FInputActionValue& Value);
@@ -153,6 +187,9 @@ protected:
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoReelLine(float Right, float Down);
+	
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoOpenPauseMenu();
 	
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")

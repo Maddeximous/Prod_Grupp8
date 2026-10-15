@@ -28,33 +28,37 @@ void APauseMenu::BeginPlay()
 		return;
 
 	EnableInput(PC);
-	
 
 	if (!InputComponent)
 		return;
 
+	// Navigate up
 	InputComponent->BindKey(
-		EKeys::Up,
+		EKeys::Gamepad_DPad_Up,
 		IE_Pressed,
 		this,
 		&APauseMenu::MoveUp
 	);
 
+	// Navigate down
 	InputComponent->BindKey(
-		EKeys::Down,
+		EKeys::Gamepad_DPad_Down,
 		IE_Pressed,
 		this,
 		&APauseMenu::MoveDown
 	);
+
+	// Select (A / Cross)
 	InputComponent->BindKey(
-		EKeys::Enter,
+		EKeys::Gamepad_FaceButton_Bottom,
 		IE_Pressed,
 		this,
 		&APauseMenu::Select
 	);
 
+	// Go back (B / Circle)
 	InputComponent->BindKey(
-		EKeys::Q,
+		EKeys::Gamepad_FaceButton_Right,
 		IE_Pressed,
 		this,
 		&APauseMenu::GoBack
@@ -262,10 +266,12 @@ void APauseMenu::TogglePauseMenu()
 	if (bPaused)
 	{
 		EnableInput(GetWorld()->GetFirstPlayerController());
+		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.0f);
 	}
 	else
 	{
 		DisableInput(GetWorld()->GetFirstPlayerController());
+		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 
 		// Remove debug text immediately
 		if (GEngine)

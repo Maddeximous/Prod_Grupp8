@@ -6,10 +6,15 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
+#include "FishManager.h"
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Prod_grupp8.h"
+#include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "GameTelemetry.h"
+#include "../../../../../../../Program Files/Epic Games/UE_5.8/Engine/Plugins/Media/AjaMedia/Source/AjaMedia/Private/Shared/AjaMediaAllowPlatformTypes.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
 {
@@ -75,11 +80,24 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		
 		// Sway left
 		EnhancedInputComponent->BindAction(SwayLeftAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayLeft);
+		
+		//Pause
+		EnhancedInputComponent->BindAction(OpenPauseMenuAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoOpenPauseMenu);
+		
+		
 	}
 	else
 	{
 		UE_LOG(LogProd_grupp8, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+}
+void AProd_grupp8Character::BeginPlay()
+{
+	Super::BeginPlay();
+
+	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
+	PauseMenu = Cast<APauseMenu>(UGameplayStatics::GetActorOfClass(this, APauseMenu::StaticClass()));
+	
 }
 
 void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
@@ -164,6 +182,11 @@ void AProd_grupp8Character::DoSonar()
 		if (!bIsFishing)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pling"));
+			FishManager -> PlaySoundOnClosestFish(SonarSoundCue);
+			if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+			{
+				Telemetry->RecordAButtonPress();
+			}
 		}
 	}
 }
@@ -240,7 +263,16 @@ void AProd_grupp8Character::DoCastLine()
 			
 			StartFishing();
 		}
+		else if (!bIsFishing && ShopInRange)
+		{
+			ShopInRange -> ToggleShop();
+		}
 	}
+}
+
+void AProd_grupp8Character::DoOpenPauseMenu()
+{
+	PauseMenu -> TogglePauseMenu();
 }
 
 void AProd_grupp8Character::StartFishing()
@@ -251,6 +283,15 @@ void AProd_grupp8Character::StartFishing()
 	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
 	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
+	if (ReelInSoundCue)
+	{
+		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
+		
+		if (ReelInSoundCueObject)
+		{
+			ReelInSoundCueObject->Stop();
+		}
+	}
 }
 
 //När man har fått napp (innan fiske)
@@ -258,18 +299,27 @@ void AProd_grupp8Character::OnHook()
 {
 	bIsFishOnHook = true;
 	caughtProgress = 0.0f;
+	UGameplayStatics::PlaySound2D(this, OnHookSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
 	//FTimerHandle UnusedHandle;
 	//GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
+	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+	{
+		Telemetry->StartReeling();
+	}
 }
 
 //(Under tiden man fiskar)
 void AProd_grupp8Character::Fishing(float deltaTime)
 {
-	
-	
 	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
 	{
+		ReelSoundTimer = 0.0f;
+		if (ReelInSoundCueObject && !bReelSoundActive)
+		{
+			bReelSoundActive = true;
+			ReelInSoundCueObject->FadeIn(0.2f, 1.0f);
+		}
 		
 		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(FishHapticEffect);
 		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
@@ -278,6 +328,18 @@ void AProd_grupp8Character::Fishing(float deltaTime)
 			Caught();
 		}
 		UE_LOG(LogTemp, Warning, TEXT("%f"), caughtProgress);
+	}
+	else if (ReelInSoundCueObject && bReelSoundActive)
+	{
+		if (ReelSoundTimer >= 0.6)
+		{
+			bReelSoundActive = false;
+			ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
+		}
+		else
+		{
+			ReelSoundTimer += deltaTime;
+		}
 	}
 	
 }
@@ -288,13 +350,27 @@ void AProd_grupp8Character::Caught()
 	
 	bIsFishing = false;
 	bIsFishOnHook = false;
+	
+	if (ReelInSoundCueObject && bReelSoundActive)
+	{
+		bReelSoundActive = false;
+		ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
+	}
+	
+	UGameplayStatics::PlaySound2D(this, CaughtSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
 	if (Bobber)
 	{
 		Bobber -> Destroy();
 	}
+	FishManager -> OnFishCaught(FishInRange);
+	FishCaught++;
 	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
 	//Bobber -> Destroy();
+	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+	{
+		Telemetry->EndReeling(TRUE);
+	}
 }
 
 AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){

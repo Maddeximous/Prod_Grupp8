@@ -152,3 +152,8 @@ AFish* AFishManager::GetClosestFishToPlayer()
 	return ClosestFish;
 }
 
+void AFishManager::PlaySoundOnClosestFish(USoundBase* SoundToPlay)
+{
+	AFish* closestFish = GetClosestFishToPlayer();
+	UGameplayStatics::SpawnSoundAtLocation(this, SoundToPlay, closestFish->GetActorLocation(), closestFish->GetActorRotation());
+}
