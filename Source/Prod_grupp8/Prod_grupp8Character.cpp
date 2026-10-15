@@ -80,6 +80,11 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		
 		// Sway left
 		EnhancedInputComponent->BindAction(SwayLeftAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayLeft);
+		
+		//Pause
+		EnhancedInputComponent->BindAction(OpenPauseMenuAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoOpenPauseMenu);
+		
+		
 	}
 	else
 	{
@@ -91,7 +96,7 @@ void AProd_grupp8Character::BeginPlay()
 	Super::BeginPlay();
 
 	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
-
+	PauseMenu = Cast<APauseMenu>(UGameplayStatics::GetActorOfClass(this, APauseMenu::StaticClass()));
 	
 }
 
@@ -258,7 +263,16 @@ void AProd_grupp8Character::DoCastLine()
 			
 			StartFishing();
 		}
+		else if (!bIsFishing && ShopInRange)
+		{
+			ShopInRange -> ToggleShop();
+		}
 	}
+}
+
+void AProd_grupp8Character::DoOpenPauseMenu()
+{
+	PauseMenu -> TogglePauseMenu();
 }
 
 void AProd_grupp8Character::StartFishing()

@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "FishManager.h"
+#include "PauseMenu.h"
+#include "Inventory.h"
+#include "Shop.h"
 #include "Prod_grupp8Character.generated.h"
 
 class UInputComponent;
@@ -70,6 +73,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* SwayLeftAction;
 	
+	/** Sonar Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* OpenPauseMenuAction;
+	
+	
 	UPROPERTY(EditAnywhere, Category ="Audio")
 	class USoundBase* ThrowSoundCue;
 	
@@ -115,6 +123,10 @@ protected:
 	UPROPERTY()
 	TObjectPtr<AFishManager> FishManager;
 	
+	UPROPERTY()
+	TObjectPtr<APauseMenu> PauseMenu;
+
+	
 public:
 	AProd_grupp8Character();
 	
@@ -126,6 +138,9 @@ public:
 	
 	UPROPERTY()
 	TObjectPtr<AFish> FishInRange;
+	
+	UPROPERTY()
+	TObjectPtr<AShop> ShopInRange;
 	
 	
 
@@ -172,6 +187,9 @@ protected:
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoReelLine(float Right, float Down);
+	
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoOpenPauseMenu();
 	
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
