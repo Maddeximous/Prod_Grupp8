@@ -9,27 +9,32 @@
 #include "Components/InputComponent.h"
 #include "InputCoreTypes.h"
 #include "SpeechSubsystem.h"
+#include "Prod_grupp8Character.h"
 
 // Sets default values
 AShop::AShop()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	USceneComponent* SceneRoot =
+		CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+
+	RootComponent = SceneRoot;
+
 	ShopSphere = CreateDefaultSubobject<USphereComponent>(
 		TEXT("ShopSphere"));
 
-	RootComponent = ShopSphere;
+	ShopSphere->SetupAttachment(RootComponent);
 
 	ShopSphere->SetSphereRadius(200.0f);
+	ShopSphere->SetCollisionProfileName(TEXT("Trigger"));
+	ShopSphere->SetGenerateOverlapEvents(true);
 
-	ShopSphere->SetCollisionEnabled(
-		ECollisionEnabled::QueryOnly);
+	ShopSphere->OnComponentBeginOverlap.AddDynamic(
+		this, &AShop::OnShopSphereOverlapBegin);
 
-	ShopSphere->SetCollisionResponseToAllChannels(
-		ECR_Ignore);
-
-	ShopSphere->SetCollisionResponseToChannel(
-		ECC_Pawn, ECR_Overlap);
+	ShopSphere->OnComponentEndOverlap.AddDynamic(
+		this, &AShop::OnShopSphereOverlapEnd);
 }
 
 // Called when the game starts or when spawned
@@ -158,6 +163,55 @@ void AShop::Tick(float DeltaTime)
 		previousShopEnabled = shopEnabled;
 	}
 
+}
+
+
+
+void AShop::OnShopSphereOverlapBegin(
+	UPrimitiveComponent* OverlappedComp,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
+	if (OtherActor && OtherActor == Pawn)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Can Shop!"));
+
+		if (AProd_grupp8Character* Player =
+			Cast<AProd_grupp8Character>(Pawn))
+		{
+			Player->ShopInRange = this;
+		}
+	}
+}
+
+void AShop::OnShopSphereOverlapEnd(
+	UPrimitiveComponent* OverlappedComp,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex)
+{
+	UE_LOG(LogTemp, Warning,
+		TEXT("SHOP END: Actor=%s, Component=%s"),
+		*GetNameSafe(OtherActor),
+		*GetNameSafe(OtherComp));
+
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+
+	if (OtherActor == Pawn)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PLAYER LEFT SHOP SPHERE"));
+
+		if (AProd_grupp8Character* Player =
+			Cast<AProd_grupp8Character>(Pawn))
+		{
+			Player->ShopInRange = nullptr;
+		}
+	}
 }
 
 void AShop::addDollars()
