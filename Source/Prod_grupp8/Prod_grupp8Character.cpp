@@ -97,7 +97,41 @@ void AProd_grupp8Character::BeginPlay()
 
 	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
 	PauseMenu = Cast<APauseMenu>(UGameplayStatics::GetActorOfClass(this, APauseMenu::StaticClass()));
+
+	if (MoveForwardSoundCue)
+	{
+		// Loops for the whole session; only the pitch changes. Not auto-destroyed.
+		CurrentMovePitch = IdleMovePitch;
+		MoveForwardSoundObject = UGameplayStatics::SpawnSound2D(this, MoveForwardSoundCue, 1.0f, IdleMovePitch, 0.0f, nullptr, true, false);
+	}
 	
+}
+
+void AProd_grupp8Character::UpdateMoveSound(float DeltaTime)
+{
+	if (!MoveForwardSoundObject)
+	{
+		return;
+	}
+
+	UCharacterMovementComponent* Movement = GetCharacterMovement();
+	const FVector Acceleration = Movement->GetCurrentAcceleration();
+
+	// Moving forward = acceleration points along the actor's forward vector, on the ground, not fishing
+	const float ForwardAccel = FVector::DotProduct(Acceleration, GetActorForwardVector());
+	const bool bMovingForward = !bIsFishing && Movement->IsMovingOnGround() && ForwardAccel > KINDA_SMALL_NUMBER;
+
+	// Stationary (or fishing) -> low idle pitch; moving forward -> pitch follows acceleration
+	float TargetPitch = IdleMovePitch;
+	if (bMovingForward)
+	{
+		// 0..1 acceleration relative to the maximum the movement component allows
+		const float AccelRatio = FMath::Clamp(ForwardAccel / FMath::Max(Movement->GetMaxAcceleration(), 1.0f), 0.0f, 1.0f);
+		TargetPitch = FMath::Lerp(MinMovePitch, MaxMovePitch, AccelRatio);
+	}
+
+	CurrentMovePitch = FMath::FInterpTo(CurrentMovePitch, TargetPitch, DeltaTime, MovePitchInterpSpeed);
+	MoveForwardSoundObject->SetPitchMultiplier(CurrentMovePitch);
 }
 
 void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
@@ -149,6 +183,7 @@ void AProd_grupp8Character::DoJumpEnd()
 void AProd_grupp8Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UpdateMoveSound(DeltaTime);
 	if (bIsFishOnHook)
 	{
 		if (bFishIsFighting)

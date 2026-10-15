@@ -99,6 +99,33 @@ protected:
 	UPROPERTY()
 	UAudioComponent* ReelInSoundCueObject;
 	
+	/** Looping sound that plays constantly; its pitch follows the player's forward acceleration */
+	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
+	class USoundBase* MoveForwardSoundCue;
+	
+	/** Pitch while the player is stationary */
+	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
+	float IdleMovePitch = 0.5f;
+	
+	/** Pitch when moving forward with very little acceleration */
+	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
+	float MinMovePitch = 0.8f;
+	
+	/** Pitch at full acceleration */
+	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
+	float MaxMovePitch = 1.4f;
+	
+	/** How quickly the pitch follows changes in acceleration */
+	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
+	float MovePitchInterpSpeed = 8.0f;
+	
+	UPROPERTY()
+	UAudioComponent* MoveForwardSoundObject;
+	
+	float CurrentMovePitch = 0.5f;
+	
+	void UpdateMoveSound(float DeltaTime);
+	
 	bool bIsFishing = false;
 	
 	bool bIsFishOnHook = false;
@@ -232,4 +259,3 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 };
-
