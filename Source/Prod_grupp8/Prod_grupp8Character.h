@@ -119,10 +119,24 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
 	float MovePitchInterpSpeed = 8.0f;
 	
+	/** Extra pitch added at full turn speed when turning left while standing still */
+	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
+	float TurnLeftPitchBoost = 0.15f;
+
+	/** Extra pitch added at full turn speed when turning right while standing still (negative values lower the pitch) */
+	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
+	float TurnRightPitchBoost = 0.25f;
+
+	/** Turn speed (degrees/sec) that gives the full left/right turn boost */
+	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
+	float MaxTurnRateForPitch = 180.0f;
+
 	UPROPERTY()
 	UAudioComponent* MoveForwardSoundObject;
-	
+
 	float CurrentMovePitch = 0.5f;
+
+	float PreviousYaw = 0.0f;
 	
 	void UpdateMoveSound(float DeltaTime);
 	

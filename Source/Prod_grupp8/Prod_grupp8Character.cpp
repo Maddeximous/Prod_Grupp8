@@ -102,6 +102,7 @@ void AProd_grupp8Character::BeginPlay()
 	{
 		// Loops for the whole session; only the pitch changes. Not auto-destroyed.
 		CurrentMovePitch = IdleMovePitch;
+		PreviousYaw = GetActorRotation().Yaw;
 		MoveForwardSoundObject = UGameplayStatics::SpawnSound2D(this, MoveForwardSoundCue, 1.0f, IdleMovePitch, 0.0f, nullptr, true, false);
 	}
 	
@@ -117,17 +118,32 @@ void AProd_grupp8Character::UpdateMoveSound(float DeltaTime)
 	UCharacterMovementComponent* Movement = GetCharacterMovement();
 	const FVector Acceleration = Movement->GetCurrentAcceleration();
 
-	// Moving forward = acceleration points along the actor's forward vector, on the ground, not fishing
-	const float ForwardAccel = FVector::DotProduct(Acceleration, GetActorForwardVector());
-	const bool bMovingForward = !bIsFishing && Movement->IsMovingOnGround() && ForwardAccel > KINDA_SMALL_NUMBER;
+	// Forward and backward movement both count: acceleration along the actor's forward axis (sign ignored)
+	const float ForwardAccel = FMath::Abs(FVector::DotProduct(Acceleration, GetActorForwardVector()));
+	const bool bMoving = !bIsFishing && Movement->IsMovingOnGround() && ForwardAccel > KINDA_SMALL_NUMBER;
 
-	// Stationary (or fishing) -> low idle pitch; moving forward -> pitch follows acceleration
+	// Turn speed in degrees/sec, measured from the actor's yaw change since last tick
+	const float CurrentYaw = GetActorRotation().Yaw;
+	// Signed: positive = turning right, negative = turning left
+	const float TurnRate = DeltaTime > KINDA_SMALL_NUMBER
+		? FMath::FindDeltaAngleDegrees(PreviousYaw, CurrentYaw) / DeltaTime
+		: 0.0f;
+	PreviousYaw = CurrentYaw;
+
+	// Stationary -> idle pitch (slightly raised while turning on the spot);
+	// moving forward or backward -> pitch follows acceleration
 	float TargetPitch = IdleMovePitch;
-	if (bMovingForward)
+	if (bMoving)
 	{
 		// 0..1 acceleration relative to the maximum the movement component allows
 		const float AccelRatio = FMath::Clamp(ForwardAccel / FMath::Max(Movement->GetMaxAcceleration(), 1.0f), 0.0f, 1.0f);
 		TargetPitch = FMath::Lerp(MinMovePitch, MaxMovePitch, AccelRatio);
+	}
+	else if (!bIsFishing)
+	{
+		const float TurnRatio = FMath::Clamp(FMath::Abs(TurnRate) / FMath::Max(MaxTurnRateForPitch, 1.0f), 0.0f, 1.0f);
+		const float TurnBoost = TurnRate > 0.0f ? TurnRightPitchBoost : TurnLeftPitchBoost;
+		TargetPitch = IdleMovePitch + TurnBoost * TurnRatio;
 	}
 
 	CurrentMovePitch = FMath::FInterpTo(CurrentMovePitch, TargetPitch, DeltaTime, MovePitchInterpSpeed);
