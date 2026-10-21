@@ -130,53 +130,50 @@ void AShop::BeginPlay()
 }
 void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (OtherActor && OtherActor != this && OtherActor->IsA(ACharacter::StaticClass()))
-    {
-        bCanOpenShop = true;
-        UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
-    }
+	if (OtherActor && OtherActor != this)
+	{
+		bCanOpenShop = true;
+		UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
+	}
 }
 
 void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-    if (OtherActor && OtherActor != this && OtherActor->IsA(ACharacter::StaticClass()))
-    {
-        bCanOpenShop = false;
+	if (OtherActor && OtherActor != this)
+	{
+		bCanOpenShop = false;
 
-        // Valfritt: Stäng shoppen automatiskt om spelaren går iväg
-        if (shopEnabled)
-        {
-            ToggleShop();
-        }
+		// Stäng shoppen automatiskt om spelaren går iväg
+		if (shopEnabled)
+		{
+			ToggleShop();
+		}
 
-        UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
-    }
+		UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
+	}
 }
 
-// Called every frame
 void AShop::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+    
 	if (shopEnabled != previousShopEnabled)
 	{
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-
 		if (PC)
 		{
 			if (shopEnabled)
 			{
-				EnableInput(PC);
+				// Shoppen öppnas (valfritt om du vill göra musen synlig etc.)
 			}
 			else
 			{
-				DisableInput(PC);
+				// Shoppen stängs - ta bort DisableInput här!
 			}
 		}
 
 		previousShopEnabled = shopEnabled;
 	}
-
 }
 
 void AShop::addDollars()

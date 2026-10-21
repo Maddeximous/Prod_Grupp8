@@ -31,9 +31,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool shopEnabled = true;
+	bool shopEnabled = false;
 	
-	bool previousShopEnabled = true;
+	bool previousShopEnabled = false;
 	bool bCanOpenShop = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
