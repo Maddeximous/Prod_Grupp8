@@ -6,7 +6,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h"
 #include "InputCoreTypes.h"
-#include "Components/SphereComponent.h"
+#include "Prod_grupp8Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AShop::AShop()
@@ -42,12 +43,7 @@ void AShop::BeginPlay()
 	if (!InputComponent)
 		return;
 
-	InputComponent->BindKey(
-		EKeys::I,
-		IE_Pressed,
-		this,
-		&AShop::ToggleShop
-	);
+	InputComponent->BindKey(EKeys::I, IE_Pressed, this, &AShop::ToggleShop);
 
 	if (true)
 	{
@@ -128,24 +124,37 @@ void AShop::BeginPlay()
 }
 void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this)
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (OtherActor && OtherActor == Pawn)
 	{
+		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+		{
+			Player->ShopInRange = this;
+		}
 		bCanOpenShop = true;
 		UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
+
+		// Tvinga shoppen att öppnas automatiskt när man kliver in (om den är stängd)
+		if (!shopEnabled)
+		{
+			ToggleShop();
+		}
 	}
 }
 
 void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor && OtherActor != this)
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	
+	if (OtherActor && OtherActor == Pawn)
 	{
-		bCanOpenShop = false;
-
-		// Stäng shoppen automatiskt om spelaren går iväg
-		if (shopEnabled)
+		
+		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
 		{
-			ToggleShop();
+			Player->FishInRange = nullptr;
 		}
+		bCanOpenShop = false;
+		
 
 		UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
 	}
@@ -406,6 +415,20 @@ void AShop::ToggleShop()
 	CurrentSection = EShopSection::Inventory;
 	CurrentIndex = 0;
 
+	// Frys eller släpp spelarens rörelse
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+	{
+		if (shopEnabled)
+		{
+			Player->GetCharacterMovement()->DisableMovement(); // Frys rörelsen
+		}
+		else
+		{
+			Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking); // Släpp rörelsen
+		}
+	}
+
 	if (shopEnabled)
 	{
 		GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened"));
@@ -415,7 +438,6 @@ void AShop::ToggleShop()
 		GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
 	}
 }
-
 void AShop::Transaction()
 {
 	if (!PlayerInventory)
