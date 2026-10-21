@@ -71,6 +71,7 @@ void AFish::BeginPlay()
 	
 	if (SeagullAudioComp && SeagullSound)
 	{
+		SeagullAudioComp->SetSound(SeagullSound);
 		SeagullAudioComp->Play();
 		UE_LOG(LogTemp, Warning, TEXT("Playing seagullsound!"));
 	}
