@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Components/InputComponent.h"
 #include "InputCoreTypes.h"
+#include "SpeechSubsystem.h"
 
 // Sets default values
 APauseMenu::APauseMenu()
@@ -106,7 +107,6 @@ void APauseMenu::Tick(float DeltaTime)
 
 void APauseMenu::MoveUp()
 {
-	
 	if (Menus.IsEmpty())
 		return;
 
@@ -121,11 +121,12 @@ void APauseMenu::MoveUp()
 	{
 		SelectedItemIndex = CurrentMenu.Items.Num() - 1;
 	}
+	
+	VoiceState();
 }
 
 void APauseMenu::MoveDown()
 {
-	
 	if (Menus.IsEmpty())
 		return;
 
@@ -140,6 +141,8 @@ void APauseMenu::MoveDown()
 	{
 		SelectedItemIndex = 0;
 	}
+	VoiceState();
+	
 }
 
 void APauseMenu::Select()
@@ -165,6 +168,8 @@ void APauseMenu::Select()
 			CurrentMenuIndex = Item.SubmenuIndex;
 			SelectedItemIndex = 0;
 		}
+	VoiceState();
+		
 	}
 	else
 	{
@@ -207,6 +212,8 @@ void APauseMenu::GoBack()
 	MenuHistory.Pop();
 
 	SelectedItemIndex = 0;
+	VoiceState();
+	
 }
 
 void APauseMenu::UpdateDebugText()
@@ -235,10 +242,11 @@ void APauseMenu::UpdateDebugText()
 
 	GEngine->AddOnScreenDebugMessage(
 		4,
-		0.0f,
+		2.0f,
 		FColor::Purple,
 		DebugText
 	);
+	
 }
 
 bool APauseMenu::IsPaused() const
@@ -271,4 +279,32 @@ void APauseMenu::TogglePauseMenu()
 			GEngine->RemoveOnScreenDebugMessage(4);
 		}
 	}
+}
+
+void APauseMenu::VoiceState()
+{
+	if (!GEngine)
+		return;
+
+	if (!Menus.IsValidIndex(CurrentMenuIndex))
+		return;
+
+	const FMenuData& CurrentMenu = Menus[CurrentMenuIndex];
+
+	FString MenuName = CurrentMenu.Name.ToString();
+	FString ItemName = TEXT("None");
+
+	if (CurrentMenu.Items.IsValidIndex(SelectedItemIndex))
+	{
+		ItemName = CurrentMenu.Items[SelectedItemIndex].Name.ToString();
+	}
+	
+	
+	UGameInstance* GI = GetGameInstance();
+	USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
+	if (!Speech)
+	{
+		return;
+	}
+	Speech->Speak(FText::FromString(ItemName),true);
 }

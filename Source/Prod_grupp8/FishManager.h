@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "FishTypes.h"
+#include "Inventory.h"
 #include "Components/BoxComponent.h" 
 #include "FishManager.generated.h"
 
@@ -42,7 +43,8 @@ public:
 	
 	AFish* SpawnFishOfType(EFishType TypeToSpawn, FVector SpawnLocation);
 	
-	
+	UPROPERTY()
+	TObjectPtr<AInventory> Inventory;
 
 protected:
 	// Called when the game starts or when spawned
