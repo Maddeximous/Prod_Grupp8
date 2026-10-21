@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 
 #include "Shop.h"
 #include "ShopWidget.h"
@@ -8,59 +6,49 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h"
 #include "InputCoreTypes.h"
-#include "SpeechSubsystem.h"
-#include "Prod_grupp8Character.h"
+#include "Components/SphereComponent.h"
 
 // Sets default values
 AShop::AShop()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
 
-	USceneComponent* SceneRoot =
-		CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
+	RootComponent = TriggerBox; // Sätt som Root så den syns i spelet
 
-	RootComponent = SceneRoot;
-
-	ShopSphere = CreateDefaultSubobject<USphereComponent>(
-		TEXT("ShopSphere"));
-
-	ShopSphere->SetupAttachment(RootComponent);
-
-	ShopSphere->SetSphereRadius(200.0f);
-	ShopSphere->SetCollisionProfileName(TEXT("Trigger"));
-	ShopSphere->SetGenerateOverlapEvents(true);
-
-	ShopSphere->OnComponentBeginOverlap.AddDynamic(
-		this, &AShop::OnShopSphereOverlapBegin);
-
-	ShopSphere->OnComponentEndOverlap.AddDynamic(
-		this, &AShop::OnShopSphereOverlapEnd);
+	TriggerBox->SetBoxExtent(FVector(150.0f, 150.0f, 100.0f)); // Storlek på boxen
+	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
 }
 
 // Called when the game starts or when spawned
 void AShop::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
+
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (TriggerBox)
+	{
+		TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AShop::OnBoxOverlapBegin);
+		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AShop::OnBoxOverlapEnd); // Avsluta shoppen när man går ut ur zonen
+	}
 
 	if (!PC)
 		return;
 
 	EnableInput(PC);
-	
 
 	if (!InputComponent)
 		return;
-	
+
 	InputComponent->BindKey(
 		EKeys::I,
 		IE_Pressed,
 		this,
 		&AShop::ToggleShop
 	);
-	
+
 	if (true)
 	{
 		InputComponent->BindKey(
@@ -69,7 +57,7 @@ void AShop::BeginPlay()
 			this,
 			&AShop::Transaction
 		);
-	
+
 		InputComponent->BindKey(
 			EKeys::E,
 			IE_Pressed,
@@ -107,8 +95,8 @@ void AShop::BeginPlay()
 		PrintCurrentItem();
 	}
 
-	
-	
+
+
 	if (ShopWidgetClass)
 	{
 		UShopWidget* ShopWidget = CreateWidget<UShopWidget>(
@@ -124,10 +112,10 @@ void AShop::BeginPlay()
 				if (Rod)
 				{
 					ShopText += FString::Printf(
-					TEXT("Rod: %s | price: %d | luck: %d"),
-					*Rod->name.ToString(),
-					Rod->price,
-					Rod->luck
+						TEXT("Rod: %s | price: %d | luck: %d"),
+						*Rod->name.ToString(),
+						Rod->price,
+						Rod->luck
 					);
 				}
 			}
@@ -136,96 +124,68 @@ void AShop::BeginPlay()
 			ShopWidget->AddToViewport();
 		}
 	}
-	
+
+}
+void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor != this)
+	{
+		bCanOpenShop = true;
+		UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
+	}
 }
 
-// Called every frame
+void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor && OtherActor != this)
+	{
+		bCanOpenShop = false;
+
+		// Stäng shoppen automatiskt om spelaren går iväg
+		if (shopEnabled)
+		{
+			ToggleShop();
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
+	}
+}
+
 void AShop::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (shopEnabled != previousShopEnabled)
 	{
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-
 		if (PC)
 		{
 			if (shopEnabled)
 			{
-				EnableInput(PC);
+				// Shoppen öppnas (valfritt om du vill göra musen synlig etc.)
 			}
 			else
 			{
-				DisableInput(PC);
+				// Shoppen stängs - ta bort DisableInput här!
 			}
 		}
 
 		previousShopEnabled = shopEnabled;
 	}
-
-}
-
-
-
-void AShop::OnShopSphereOverlapBegin(
-	UPrimitiveComponent* OverlappedComp,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex,
-	bool bFromSweep,
-	const FHitResult& SweepResult)
-{
-	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-
-	if (OtherActor && OtherActor == Pawn)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Can Shop!"));
-
-		if (AProd_grupp8Character* Player =
-			Cast<AProd_grupp8Character>(Pawn))
-		{
-			Player->ShopInRange = this;
-		}
-	}
-}
-
-void AShop::OnShopSphereOverlapEnd(
-	UPrimitiveComponent* OverlappedComp,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex)
-{
-	UE_LOG(LogTemp, Warning,
-		TEXT("SHOP END: Actor=%s, Component=%s"),
-		*GetNameSafe(OtherActor),
-		*GetNameSafe(OtherComp));
-
-	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-
-	if (OtherActor == Pawn)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PLAYER LEFT SHOP SPHERE"));
-
-		if (AProd_grupp8Character* Player =
-			Cast<AProd_grupp8Character>(Pawn))
-		{
-			Player->ShopInRange = nullptr;
-		}
-	}
 }
 
 void AShop::addDollars()
 {
-	dollars+= 100;
-	
+	dollars += 100;
+
 	UE_LOG(LogTemp, Warning, TEXT("Dollars: %d"), dollars);
 	GEngine->AddOnScreenDebugMessage(
 		3,
 		5.0f,
 		FColor::Yellow,
 		FString::Printf(
-		TEXT("Money: %d"),
-		dollars
+			TEXT("Money: %d"),
+			dollars
 		)
 	);
 
@@ -233,12 +193,11 @@ void AShop::addDollars()
 
 void AShop::MoveLeft()
 {
-	skipVoice= false;
 	if (shopEnabled)
 	{
 		CurrentSection = EShopSection::Inventory;
 		CurrentIndex = 0;
-	
+
 		GEngine->AddOnScreenDebugMessage(
 			3,
 			5.0f,
@@ -255,7 +214,6 @@ void AShop::MoveLeft()
 
 void AShop::MoveRight()
 {
-	skipVoice= false;
 	if (shopEnabled)
 	{
 		CurrentSection = EShopSection::Shop;
@@ -399,26 +357,6 @@ void AShop::PrintCurrentItem()
 						CurrentFish->Weight
 					)
 				);
-				
-				UGameInstance* GI = GetGameInstance();
-				USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
-				if (!Speech)
-				{
-					return;
-				}
-				Speech->StopSpeaking();
-
-				// false = wait in line, don't cut off current speech
-				Speech->Speak(
-					FText::FromString(
-					FString::Printf(
-						TEXT("    : %s, : %.2f kilo"),
-						*FishTypeName,
-						CurrentFish->Weight
-						)
-						),
-						false
-				);
 			}
 		}
 		else
@@ -444,96 +382,37 @@ void AShop::PrintCurrentItem()
 					10.0f,
 					FColor::Green,
 					FString::Printf(
-					TEXT("Shop: %s | price: %d | luck: %d"),
-					*CurrentRod->name.ToString(),
-					CurrentRod->price,
-					CurrentRod->luck
+						TEXT("Shop: %s | price: %d | luck: %d"),
+						*CurrentRod->name.ToString(),
+						CurrentRod->price,
+						CurrentRod->luck
 					)
 				);
 			}
-			
-			UGameInstance* GI = GetGameInstance();
-			USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
-			if (!Speech)
-			{
-				return;
-			}
-			Speech->StopSpeaking();
-			// false = wait in line, don't cut off current speech
-			Speech->Speak(
-				FText::FromString(
-				FString::Printf(
-				TEXT(": %s | pris: %d | kronor kvalitet: %d | procent"),
-				*CurrentRod->name.ToString(),
-				CurrentRod->price,
-				CurrentRod->luck
-					)
-					),
-					false
-			);
 		}
 	}
 }
 
 void AShop::ToggleShop()
 {
-	AShop::shopEnabled = !AShop::shopEnabled;
-	
+	// Om shoppen är stängd, tillåt bara att öppna den om spelaren står i boxen
+	if (!shopEnabled && !bCanOpenShop)
+	{
+		return;
+	}
+
+	shopEnabled = !shopEnabled;
+
 	CurrentSection = EShopSection::Inventory;
 	CurrentIndex = 0;
-	
+
 	if (shopEnabled)
 	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			10.0f,
-			FColor::Blue,
-			TEXT("Shop Opened")
-		);
-		UGameInstance* GI = GetGameInstance();
-		USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
-		if (!Speech)
-		{
-			return;
-		}
-		Speech->StopSpeaking();
-		// false = wait in line, don't cut off current speech
-		Speech->Speak(
-			FText::FromString(
-			FString::Printf(
-			TEXT("Butiken öppnad")
-			
-				)
-				),
-				false
-		);
+		GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened"));
 	}
-	if (!shopEnabled)
+	else
 	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			10.0f,
-			FColor::Blue,
-			TEXT("Shop Closed")
-		);
-		UGameInstance* GI = GetGameInstance();
-		USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
-		if (!Speech)
-		{
-			return;
-		}
-
-		// false = wait in line, don't cut off current speech
-		Speech->StopSpeaking();
-		Speech->Speak(
-			FText::FromString(
-			FString::Printf(
-			TEXT("Butiken stängd")
-			
-				)
-				),
-				false
-		);
+		GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
 	}
 }
 
@@ -560,7 +439,7 @@ void AShop::Transaction()
 		}
 
 		int32 SellPrice = FMath::RoundToInt(CurrentFish->Weight);
-		
+
 
 		dollars += SellPrice;
 
@@ -575,33 +454,6 @@ void AShop::Transaction()
 				TEXT("SOLD FISH FOR %d DOLLARS"),
 				SellPrice
 			)
-		);
-		UGameInstance* GI = GetGameInstance();
-		USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
-		if (!Speech)
-		{
-			return;
-		}
-		Speech->StopSpeaking();
-
-		// false = wait in line, don't cut off current speech
-		Speech->Speak(
-			FText::FromString(
-			FString::Printf(
-			TEXT("Sålde fisk för %d kronor"),
-				SellPrice
-				)
-				),
-				false
-		);
-		Speech->Speak(
-			FText::FromString(
-			FString::Printf(
-			TEXT("Du har: %d kronor"),
-				dollars
-				)
-				),
-				false
 		);
 		GEngine->AddOnScreenDebugMessage(
 			3,
@@ -646,27 +498,9 @@ void AShop::Transaction()
 				FColor::Red,
 				TEXT("NOT ENOUGH MONEY")
 			);
-			UGameInstance* GI = GetGameInstance();
-			USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
-			if (!Speech)
-			{
-				return;
-			}
-			Speech->StopSpeaking();
-			// false = wait in line, don't cut off current speech
-			Speech->Speak(
-				FText::FromString(
-				FString::Printf(
-				TEXT("För lite pengar")
-				
-					)
-					),
-					false
-			);
+
 			return;
 		}
-		
-		
 
 		ARod* NewRod = GetWorld()->SpawnActor<ARod>(
 			ARod::StaticClass(),
@@ -695,34 +529,6 @@ void AShop::Transaction()
 				*CurrentRod->name.ToString(),
 				RodPrice
 			)
-		);
-		
-		UGameInstance* GI = GetGameInstance();
-		USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
-		if (!Speech)
-		{
-			return;
-		}
-		Speech->StopSpeaking();
-		// false = wait in line, don't cut off current speech
-		Speech->Speak(
-			FText::FromString(
-			FString::Printf(
-			TEXT("Köpte %s för %d kronor"),
-				*CurrentRod->name.ToString(),
-				RodPrice
-				)
-				),
-				false
-		);
-		Speech->Speak(
-			FText::FromString(
-			FString::Printf(
-			TEXT("Du har: %d kronor"),
-				dollars
-				)
-				),
-				false
 		);
 		GEngine->AddOnScreenDebugMessage(
 			3,
