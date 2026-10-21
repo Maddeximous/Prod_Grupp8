@@ -16,26 +16,31 @@ AShop::AShop()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ShopSphere = CreateDefaultSubobject<USphereComponent>(TEXT("ShopSphere"));
-	RootComponent = ShopSphere; // Viktigt så att komponenten hamnar i scenen!
-    
-	ShopSphere->SetSphereRadius(300.0f);
-	ShopSphere->SetCollisionProfileName(TEXT("Trigger"));
+	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
+	RootComponent = TriggerBox; // Sätt som Root så den syns i spelet
+
+	TriggerBox->SetBoxExtent(FVector(150.0f, 150.0f, 100.0f)); // Storlek på boxen
+	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
 }
 
 // Called when the game starts or when spawned
 void AShop::BeginPlay()
 {
 	Super::BeginPlay();
-	
+    
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 
+	if (TriggerBox)
+	{
+		TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AShop::OnBoxOverlapBegin);
+		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AShop::OnBoxOverlapEnd); // Avsluta shoppen när man går ut ur zonen
+	}
+    
 	if (!PC)
 		return;
 
 	EnableInput(PC);
 	
-
 	if (!InputComponent)
 		return;
 	
@@ -123,17 +128,31 @@ void AShop::BeginPlay()
 	}
 	
 }
-void AShop::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// Kontrollera om det är spelaren som kliver in i sfären
-	if (OtherActor && OtherActor != this)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Någon gick in i shop-sfären!"));
-        
-		// Exempel: Vill du öppna shoppen automatiskt här?
-		// ToggleShop(); 
-	}
+    if (OtherActor && OtherActor != this && OtherActor->IsA(ACharacter::StaticClass()))
+    {
+        bCanOpenShop = true;
+        UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
+    }
 }
+
+void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    if (OtherActor && OtherActor != this && OtherActor->IsA(ACharacter::StaticClass()))
+    {
+        bCanOpenShop = false;
+
+        // Valfritt: Stäng shoppen automatiskt om spelaren går iväg
+        if (shopEnabled)
+        {
+            ToggleShop();
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
+    }
+}
+
 // Called every frame
 void AShop::Tick(float DeltaTime)
 {
@@ -381,29 +400,25 @@ void AShop::PrintCurrentItem()
 
 void AShop::ToggleShop()
 {
-	AShop::shopEnabled = !AShop::shopEnabled;
-	
-	CurrentSection = EShopSection::Inventory;
-	CurrentIndex = 0;
-	
-	if (shopEnabled)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			10.0f,
-			FColor::Blue,
-			TEXT("Shop Opened")
-		);
-	}
-	if (!shopEnabled)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			10.0f,
-			FColor::Blue,
-			TEXT("Shop Closed")
-		);
-	}
+    // Om shoppen är stängd, tillåt bara att öppna den om spelaren står i boxen
+    if (!shopEnabled && !bCanOpenShop)
+    {
+        return; 
+    }
+
+    shopEnabled = !shopEnabled;
+
+    CurrentSection = EShopSection::Inventory;
+    CurrentIndex = 0;
+
+    if (shopEnabled)
+    {
+        GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened"));
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
+    }
 }
 
 void AShop::Transaction()

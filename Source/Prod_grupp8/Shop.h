@@ -6,10 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "Rod.h"
 #include "Inventory.h"
+#include "Components/BoxComponent.h"
 #include "Shop.generated.h"
 
+
 class AInventory;
-class USphereComponent;
 
 UENUM()
 enum class EShopSection
@@ -33,6 +34,7 @@ public:
 	bool shopEnabled = true;
 	
 	bool previousShopEnabled = true;
+	bool bCanOpenShop = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	AInventory* PlayerInventory;
@@ -41,13 +43,16 @@ public:
 	TSubclassOf<UShopWidget> ShopWidgetClass;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USphereComponent* ShopSphere;
+	UBoxComponent* TriggerBox;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<ARod*> Rods;
 	
 	UFUNCTION()
-	void OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION()
+	void OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
 	int32 dollars= 0;
 	
