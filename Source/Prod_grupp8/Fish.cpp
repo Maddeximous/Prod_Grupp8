@@ -30,14 +30,25 @@ AFish::AFish()
 	FishingAudioComp->SetupAttachment(RootComponent);
 	FishingAudioComp->bAutoActivate = false;
 	
+	SeagullAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("SeagullAudioComp"));
+	SeagullAudioComp->SetupAttachment(RootComponent);
+	SeagullAudioComp->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
+	SeagullAudioComp->bAutoActivate = false;
+	
 	FishingSphere->SetCollisionProfileName("Trigger");
 	
 	bCanFish = false;
 	
-	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Script/Engine.SoundWave'/Game/Audio/RawAudio/loop_bubbles_1.loop_bubbles_1'"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Script/Engine.SoundWave'/Game/Audio/RawAudio/splash-loop-93450'"));
 	if (SoundAsset.Succeeded())
 	{
 		FishingSound = SoundAsset.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<USoundBase> SeagullSoundAsset(TEXT("/Script/Engine.SoundCue'/Game/Audio/SoundCues/SC_SeaGull.SC_SeaGull'"));
+	if (SeagullSoundAsset.Succeeded())
+	{
+		SeagullSound = SeagullSoundAsset.Object;
 	}
 
 }
@@ -56,6 +67,12 @@ void AFish::BeginPlay()
 	if (FishingAudioComp && FishingSound)
 	{
 		FishingAudioComp->SetSound(FishingSound);
+	}
+	
+	if (SeagullAudioComp && SeagullSound)
+	{
+		SeagullAudioComp->Play();
+		UE_LOG(LogTemp, Warning, TEXT("Playing seagullsound!"));
 	}
 }
 

@@ -97,7 +97,57 @@ void AProd_grupp8Character::BeginPlay()
 
 	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
 	PauseMenu = Cast<APauseMenu>(UGameplayStatics::GetActorOfClass(this, APauseMenu::StaticClass()));
+
+	if (MoveForwardSoundCue)
+	{
+		// Loops for the whole session; only the pitch changes. Not auto-destroyed.
+		CurrentMovePitch = IdleMovePitch;
+		PreviousYaw = GetActorRotation().Yaw;
+		MoveForwardSoundObject = UGameplayStatics::SpawnSound2D(this, MoveForwardSoundCue, 1.0f, IdleMovePitch, 0.0f, nullptr, true, false);
+	}
 	
+}
+
+void AProd_grupp8Character::UpdateMoveSound(float DeltaTime)
+{
+	if (!MoveForwardSoundObject)
+	{
+		return;
+	}
+
+	UCharacterMovementComponent* Movement = GetCharacterMovement();
+	const FVector Acceleration = Movement->GetCurrentAcceleration();
+
+	// Forward and backward movement both count: acceleration along the actor's forward axis (sign ignored)
+	const float ForwardAccel = FMath::Abs(FVector::DotProduct(Acceleration, GetActorForwardVector()));
+	const bool bMoving = !bIsFishing && Movement->IsMovingOnGround() && ForwardAccel > KINDA_SMALL_NUMBER;
+
+	// Turn speed in degrees/sec, measured from the actor's yaw change since last tick
+	const float CurrentYaw = GetActorRotation().Yaw;
+	// Signed: positive = turning right, negative = turning left
+	const float TurnRate = DeltaTime > KINDA_SMALL_NUMBER
+		? FMath::FindDeltaAngleDegrees(PreviousYaw, CurrentYaw) / DeltaTime
+		: 0.0f;
+	PreviousYaw = CurrentYaw;
+
+	// Stationary -> idle pitch (slightly raised while turning on the spot);
+	// moving forward or backward -> pitch follows acceleration
+	float TargetPitch = IdleMovePitch;
+	if (bMoving)
+	{
+		// 0..1 acceleration relative to the maximum the movement component allows
+		const float AccelRatio = FMath::Clamp(ForwardAccel / FMath::Max(Movement->GetMaxAcceleration(), 1.0f), 0.0f, 1.0f);
+		TargetPitch = FMath::Lerp(MinMovePitch, MaxMovePitch, AccelRatio);
+	}
+	else if (!bIsFishing)
+	{
+		const float TurnRatio = FMath::Clamp(FMath::Abs(TurnRate) / FMath::Max(MaxTurnRateForPitch, 1.0f), 0.0f, 1.0f);
+		const float TurnBoost = TurnRate > 0.0f ? TurnRightPitchBoost : TurnLeftPitchBoost;
+		TargetPitch = IdleMovePitch + TurnBoost * TurnRatio;
+	}
+
+	CurrentMovePitch = FMath::FInterpTo(CurrentMovePitch, TargetPitch, DeltaTime, MovePitchInterpSpeed);
+	MoveForwardSoundObject->SetPitchMultiplier(CurrentMovePitch);
 }
 
 void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
@@ -149,6 +199,7 @@ void AProd_grupp8Character::DoJumpEnd()
 void AProd_grupp8Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UpdateMoveSound(DeltaTime);
 	if (bIsFishOnHook)
 	{
 		if (bFishIsFighting)
