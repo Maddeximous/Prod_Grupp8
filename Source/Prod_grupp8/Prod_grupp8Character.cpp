@@ -170,22 +170,6 @@ void AProd_grupp8Character::LookInput(const FInputActionValue& Value)
 
 }
 
-
-void AProd_grupp8Character::DoMove(float Right, float Forward)
-{
-	if (GetController())
-	{
-		if (!bIsFishing)
-		{
-			// pass the move inputs
-			AddMovementInput(GetActorRightVector(), Right);
-			AddMovementInput(GetActorForwardVector(), Forward);
-		}
-	}
-}
-
-
-
 void AProd_grupp8Character::DoJumpStart()
 {
 	// pass Jump to the character
@@ -279,6 +263,12 @@ void AProd_grupp8Character::DoAim(float Yaw, float Pitch)
 {
 	if (GetController())
 	{
+		// Om shoppen är öppen, lås blicken/kameran
+		if (ShopInRange && ShopInRange->shopEnabled)
+		{
+			return;
+		}
+
 		if (!bIsFishing)
 		{
 			// pass the rotation inputs
@@ -287,7 +277,6 @@ void AProd_grupp8Character::DoAim(float Yaw, float Pitch)
 		}
 	}
 }
-
 void AProd_grupp8Character::DoReelLine(float Right, float Down)
 {
 	if (GetController())
