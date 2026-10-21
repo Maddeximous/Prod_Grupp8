@@ -170,6 +170,18 @@ void AProd_grupp8Character::LookInput(const FInputActionValue& Value)
 
 }
 
+void AProd_grupp8Character::DoMove(float Right, float Forward)
+{
+	if (GetController())
+	{
+		if (!bIsFishing)
+		{
+			// pass the move inputs
+			AddMovementInput(GetActorRightVector(), Right);
+			AddMovementInput(GetActorForwardVector(), Forward);
+		}
+	}
+}
 void AProd_grupp8Character::DoJumpStart()
 {
 	// pass Jump to the character
