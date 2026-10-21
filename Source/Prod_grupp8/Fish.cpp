@@ -28,6 +28,7 @@ AFish::AFish()
 	//Skapa ljud component
 	FishingAudioComp = CreateDefaultSubobject<UAudioComponent>("FishingAudioComp");
 	FishingAudioComp->SetupAttachment(RootComponent);
+	FishingAudioComp->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
 	FishingAudioComp->bAutoActivate = false;
 	
 	FishingSphere->SetCollisionProfileName("Trigger");
