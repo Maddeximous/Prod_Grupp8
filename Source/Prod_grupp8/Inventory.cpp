@@ -18,7 +18,7 @@ void AInventory::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	SpawnTestFish();
+	//SpawnTestFish();
 	
 }
 

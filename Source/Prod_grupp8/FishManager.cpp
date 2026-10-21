@@ -21,6 +21,7 @@ AFishManager::AFishManager()
 void AFishManager::BeginPlay()
 {
 	Super::BeginPlay();
+	Inventory = Cast<AInventory>(UGameplayStatics::GetActorOfClass(this, AInventory::StaticClass()));
 	
 	SpawnInitialFish();
 }
@@ -74,8 +75,9 @@ void AFishManager::OnFishCaught(AFish* CaughtFish)
 	{
 		
 		SpawnedFish.Remove(CaughtFish);
-
-		CaughtFish->Destroy();
+		
+		Inventory -> AddFish(CaughtFish);
+		CaughtFish -> SetActorLocation(FVector(0,0, -10000.0));
 		
 		float RespawnDelay = FMath::RandRange(5.0f, 10.0f);
 		
