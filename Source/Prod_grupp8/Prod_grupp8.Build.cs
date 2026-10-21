@@ -19,10 +19,12 @@ public class Prod_grupp8 : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
-            "Json"
+            "Json",
+            "SlateCore",
+            "DeveloperSettings"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AudioGameSpeech" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Prod_grupp8",

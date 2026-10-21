@@ -47,6 +47,7 @@ private:
 	void HandleBack();
 
 	void UpdateDebugText();
+	void VoiceState();
 	
 	
 

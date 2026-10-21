@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 
 #include "Shop.h"
 #include "ShopWidget.h"
@@ -8,38 +6,49 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h"
 #include "InputCoreTypes.h"
+#include "Components/SphereComponent.h"
 
 // Sets default values
 AShop::AShop()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
+	RootComponent = TriggerBox; // Sätt som Root så den syns i spelet
+
+	TriggerBox->SetBoxExtent(FVector(150.0f, 150.0f, 100.0f)); // Storlek på boxen
+	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
 }
 
 // Called when the game starts or when spawned
 void AShop::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (TriggerBox)
+	{
+		TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AShop::OnBoxOverlapBegin);
+		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AShop::OnBoxOverlapEnd); // Avsluta shoppen när man går ut ur zonen
+	}
 
 	if (!PC)
 		return;
 
 	EnableInput(PC);
-	
 
 	if (!InputComponent)
 		return;
-	
+
 	InputComponent->BindKey(
 		EKeys::I,
 		IE_Pressed,
 		this,
 		&AShop::ToggleShop
 	);
-	
+
 	if (true)
 	{
 		InputComponent->BindKey(
@@ -48,7 +57,7 @@ void AShop::BeginPlay()
 			this,
 			&AShop::Transaction
 		);
-	
+
 		InputComponent->BindKey(
 			EKeys::E,
 			IE_Pressed,
@@ -86,8 +95,8 @@ void AShop::BeginPlay()
 		PrintCurrentItem();
 	}
 
-	
-	
+
+
 	if (ShopWidgetClass)
 	{
 		UShopWidget* ShopWidget = CreateWidget<UShopWidget>(
@@ -103,10 +112,10 @@ void AShop::BeginPlay()
 				if (Rod)
 				{
 					ShopText += FString::Printf(
-					TEXT("Rod: %s | price: %d | luck: %d"),
-					*Rod->name.ToString(),
-					Rod->price,
-					Rod->luck
+						TEXT("Rod: %s | price: %d | luck: %d"),
+						*Rod->name.ToString(),
+						Rod->price,
+						Rod->luck
 					);
 				}
 			}
@@ -115,47 +124,68 @@ void AShop::BeginPlay()
 			ShopWidget->AddToViewport();
 		}
 	}
-	
+
+}
+void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor != this)
+	{
+		bCanOpenShop = true;
+		UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
+	}
 }
 
-// Called every frame
+void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor && OtherActor != this)
+	{
+		bCanOpenShop = false;
+
+		// Stäng shoppen automatiskt om spelaren går iväg
+		if (shopEnabled)
+		{
+			ToggleShop();
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
+	}
+}
+
 void AShop::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (shopEnabled != previousShopEnabled)
 	{
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-
 		if (PC)
 		{
 			if (shopEnabled)
 			{
-				EnableInput(PC);
+				// Shoppen öppnas (valfritt om du vill göra musen synlig etc.)
 			}
 			else
 			{
-				DisableInput(PC);
+				// Shoppen stängs - ta bort DisableInput här!
 			}
 		}
 
 		previousShopEnabled = shopEnabled;
 	}
-
 }
 
 void AShop::addDollars()
 {
-	dollars+= 100;
-	
+	dollars += 100;
+
 	UE_LOG(LogTemp, Warning, TEXT("Dollars: %d"), dollars);
 	GEngine->AddOnScreenDebugMessage(
 		3,
 		5.0f,
 		FColor::Yellow,
 		FString::Printf(
-		TEXT("Money: %d"),
-		dollars
+			TEXT("Money: %d"),
+			dollars
 		)
 	);
 
@@ -167,7 +197,7 @@ void AShop::MoveLeft()
 	{
 		CurrentSection = EShopSection::Inventory;
 		CurrentIndex = 0;
-	
+
 		GEngine->AddOnScreenDebugMessage(
 			3,
 			5.0f,
@@ -352,10 +382,10 @@ void AShop::PrintCurrentItem()
 					10.0f,
 					FColor::Green,
 					FString::Printf(
-					TEXT("Shop: %s | price: %d | luck: %d"),
-					*CurrentRod->name.ToString(),
-					CurrentRod->price,
-					CurrentRod->luck
+						TEXT("Shop: %s | price: %d | luck: %d"),
+						*CurrentRod->name.ToString(),
+						CurrentRod->price,
+						CurrentRod->luck
 					)
 				);
 			}
@@ -365,28 +395,24 @@ void AShop::PrintCurrentItem()
 
 void AShop::ToggleShop()
 {
-	AShop::shopEnabled = !AShop::shopEnabled;
-	
+	// Om shoppen är stängd, tillåt bara att öppna den om spelaren står i boxen
+	if (!shopEnabled && !bCanOpenShop)
+	{
+		return;
+	}
+
+	shopEnabled = !shopEnabled;
+
 	CurrentSection = EShopSection::Inventory;
 	CurrentIndex = 0;
-	
+
 	if (shopEnabled)
 	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			10.0f,
-			FColor::Blue,
-			TEXT("Shop Opened")
-		);
+		GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened"));
 	}
-	if (!shopEnabled)
+	else
 	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			10.0f,
-			FColor::Blue,
-			TEXT("Shop Closed")
-		);
+		GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
 	}
 }
 
@@ -413,7 +439,7 @@ void AShop::Transaction()
 		}
 
 		int32 SellPrice = FMath::RoundToInt(CurrentFish->Weight);
-		
+
 
 		dollars += SellPrice;
 

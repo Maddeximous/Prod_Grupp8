@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "FishManager.h"
+#include "Inventory.h"
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Prod_grupp8.h"
@@ -415,6 +416,7 @@ void AProd_grupp8Character::Caught()
 		Bobber -> Destroy();
 	}
 	FishManager -> OnFishCaught(FishInRange);
+	
 	FishCaught++;
 	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
 	//Bobber -> Destroy();
