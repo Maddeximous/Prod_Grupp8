@@ -28,8 +28,12 @@ AFish::AFish()
 	//Skapa ljud component
 	FishingAudioComp = CreateDefaultSubobject<UAudioComponent>("FishingAudioComp");
 	FishingAudioComp->SetupAttachment(RootComponent);
-	FishingAudioComp->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
 	FishingAudioComp->bAutoActivate = false;
+	
+	SeagullAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("SeagullAudioComp"));
+	SeagullAudioComp->SetupAttachment(RootComponent);
+	SeagullAudioComp->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
+	SeagullAudioComp->bAutoActivate = false;
 	
 	FishingSphere->SetCollisionProfileName("Trigger");
 	
@@ -39,6 +43,12 @@ AFish::AFish()
 	if (SoundAsset.Succeeded())
 	{
 		FishingSound = SoundAsset.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<USoundBase> SeagullSoundAsset(TEXT("/Script/Engine.SoundCue'/Game/Audio/SoundCues/SC_SeaGull.SC_SeaGull'"));
+	if (SeagullSoundAsset.Succeeded())
+	{
+		SeagullSound = SeagullSoundAsset.Object;
 	}
 
 }
@@ -57,6 +67,12 @@ void AFish::BeginPlay()
 	if (FishingAudioComp && FishingSound)
 	{
 		FishingAudioComp->SetSound(FishingSound);
+	}
+	
+	if (SeagullAudioComp && SeagullSound)
+	{
+		SeagullAudioComp->Play();
+		UE_LOG(LogTemp, Warning, TEXT("Playing seagullsound!"));
 	}
 }
 

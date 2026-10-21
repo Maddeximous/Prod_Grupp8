@@ -31,6 +31,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UAudioComponent* FishingAudioComp;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UAudioComponent* SeagullAudioComp;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<USoundBase> FishSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<USoundBase> SeagullSound;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing")
 	bool bCanFish;
 	
