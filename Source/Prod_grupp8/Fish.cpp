@@ -39,7 +39,7 @@ AFish::AFish()
 	
 	bCanFish = false;
 	
-	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Script/Engine.SoundWave'/Game/Audio/RawAudio/loop_bubbles_1.loop_bubbles_1'"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(TEXT("/Script/Engine.SoundWave'/Game/Audio/RawAudio/splash-loop-93450'"));
 	if (SoundAsset.Succeeded())
 	{
 		FishingSound = SoundAsset.Object;
