@@ -33,7 +33,7 @@
 		},
 		{
 			"Name": "AudioGameSpeech",
-			"Enabled": false,
+			"Enabled": true,
 			"PlatformAllowList": [
 				"Win64"
 			]
