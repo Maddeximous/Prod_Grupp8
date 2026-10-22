@@ -17,7 +17,8 @@ enum class EPauseMenuAction : uint8
 	Resume,
 	Restart,
 	Quit,
-	OpenSettings
+	OpenSettings,
+	OpenFishInventory
 };
 
 USTRUCT(BlueprintType)
