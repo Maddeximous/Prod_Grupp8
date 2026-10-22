@@ -119,8 +119,10 @@ void AShop::BeginPlay()
 			ShopWidget->SetRodText(ShopText);
 			ShopWidget->AddToViewport();
 		}
+		
 	}
-
+	// Detta ser till att shoppen officiellt är stängd och skriver ut "Shop Closed" direkt när spelet startar
+	CloseShop();
 }
 void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -134,10 +136,10 @@ void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Other
 		bCanOpenShop = true;
 		UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
 
-		// Tvinga shoppen att öppnas automatiskt när man kliver in (om den är stängd)
+		// Känn av att shoppen är stängd när man går in, och öppna den OMEDELBART
 		if (!shopEnabled)
 		{
-			ToggleShop();
+			OpenShop(); // Detta sätter igång allt automatiskt!
 		}
 	}
 }
@@ -145,21 +147,24 @@ void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Other
 void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	
+    
 	if (OtherActor && OtherActor == Pawn)
 	{
-		
 		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
 		{
-			Player->FishInRange = nullptr;
+			Player->ShopInRange = nullptr;
 		}
 		bCanOpenShop = false;
-		
+
+		// Stäng shoppen automatiskt när spelaren lämnar zonen
+		if (shopEnabled)
+		{
+			CloseShop();
+		}
 
 		UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
 	}
 }
-
 void AShop::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -401,41 +406,54 @@ void AShop::PrintCurrentItem()
 		}
 	}
 }
+void AShop::OpenShop()
+{
+	shopEnabled = true;
+	CurrentSection = EShopSection::Inventory;
+	CurrentIndex = 0;
+
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+	{
+		Player->GetCharacterMovement()->DisableMovement();
+		// Stäng av fiske här om spelarklassen har en flagga för det, t.ex:
+		// Player->bCanFish = false; 
+	}
+
+	GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened"));
+	PrintCurrentItem();
+}
+
+void AShop::CloseShop()
+{
+	shopEnabled = false;
+
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+	{
+		Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		// Slå på fiske igen om det behövs
+		// Player->bCanFish = true;
+	}
+
+	GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
+}
 
 void AShop::ToggleShop()
 {
-	// Om shoppen är stängd, tillåt bara att öppna den om spelaren står i boxen
-	if (!shopEnabled && !bCanOpenShop)
+	// Om spelaren inte står i zonen ska man inte kunna öppna/stänga med knappen
+	if (!bCanOpenShop)
 	{
 		return;
 	}
 
-	shopEnabled = !shopEnabled;
-
-	CurrentSection = EShopSection::Inventory;
-	CurrentIndex = 0;
-
-	// Frys eller släpp spelarens rörelse
-	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
-	{
-		if (shopEnabled)
-		{
-			Player->GetCharacterMovement()->DisableMovement(); // Frys rörelsen
-		}
-		else
-		{
-			Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking); // Släpp rörelsen
-		}
-	}
-
 	if (shopEnabled)
 	{
-		GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened"));
+		CloseShop();
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
+		OpenShop();
 	}
 }
 void AShop::Transaction()

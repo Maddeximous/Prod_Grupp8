@@ -57,6 +57,7 @@ public:
 
 	int32 dollars = 0;
 
+	void CloseShop();
 	void ToggleShop();
 	void addDollars();
 
@@ -80,5 +81,5 @@ private:
 	void Transaction();
 
 	void PrintCurrentItem();
-
+	void OpenShop();
 };
