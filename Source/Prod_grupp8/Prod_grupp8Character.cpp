@@ -206,26 +206,15 @@ void AProd_grupp8Character::Tick(float DeltaTime)
 	UpdateMoveSound(DeltaTime);
 	if (bIsFishOnHook)
 	{
+		float ReelValue = Reeling(DeltaTime);
 		if (bFishIsFighting)
 		{
-			FishFightTimer += DeltaTime;
-			if (FishFightTimer > 4)
-			{
-				bFishIsFighting = false;
-			}
 			
-			if (FMath::RandBool())
-			{
-				FishFightingLeft(DeltaTime);
-			}
-			else
-			{
-				FishFightingRight(DeltaTime);
-			}
+			FishFighting(DeltaTime, ReelValue);
 		}
 		else
 		{
-			Fishing(DeltaTime);
+			Fishing(DeltaTime, ReelValue);
 		}
 	}
 }
@@ -302,9 +291,10 @@ void AProd_grupp8Character::DoReelLine(float Right, float Down)
 	{
 		if (bIsFishOnHook)
 		{
-			FVector2d NewReelStickPosition = FVector2d(Right, Down).GetSafeNormal();
+			FVector2d NewReelStickPosition = FVector2d(Right, Down);
+			if (NewReelStickPosition.Length() < 0.8) {NewReelStickPosition = FVector2D(0.0f, 0.0f);}
 			// Räkna ut vinkeln via arccosine av dot product
-			float Dot = FVector2D::DotProduct(NewReelStickPosition, ReelStickPosition.GetSafeNormal());
+			float Dot = FVector2D::DotProduct(NewReelStickPosition.GetSafeNormal(), ReelStickPosition.GetSafeNormal());
 			float AngleInRadians = FMath::Acos(Dot);
 			
 			ReelStickDegree = FMath::RadiansToDegrees(AngleInRadians);
@@ -339,6 +329,7 @@ void AProd_grupp8Character::DoOpenPauseMenu()
 
 void AProd_grupp8Character::StartFishing()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Start Fish"));
 	bIsFishing = true;
 	float fTimeToFish = FMath::RandRange(1.0, 3.0);
 	FTimerHandle UnusedHandle;
@@ -359,6 +350,12 @@ void AProd_grupp8Character::StartFishing()
 //När man har fått napp (innan fiske)
 void AProd_grupp8Character::OnHook()
 {
+	FTimerHandle UnusedHandle;
+	float NextFishFight = FMath::RandRange(3.0, 5.0);
+	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
+	
+	ProgressToCatch = (FishInRange -> Weight * 30 + 100) * FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty;
+	
 	bIsFishOnHook = true;
 	caughtProgress = 0.0f;
 	UGameplayStatics::PlaySound2D(this, OnHookSoundCue, 1.0f, 1.0f, 0.0f);
@@ -369,41 +366,6 @@ void AProd_grupp8Character::OnHook()
 	{
 		Telemetry->StartReeling();
 	}
-}
-
-//(Under tiden man fiskar)
-void AProd_grupp8Character::Fishing(float deltaTime)
-{
-	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
-	{
-		ReelSoundTimer = 0.0f;
-		if (ReelInSoundCueObject && !bReelSoundActive)
-		{
-			bReelSoundActive = true;
-			ReelInSoundCueObject->FadeIn(0.2f, 1.0f);
-		}
-		
-		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(FishHapticEffect);
-		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
-		if (caughtProgress >= 100)
-		{
-			Caught();
-		}
-		UE_LOG(LogTemp, Warning, TEXT("%f"), caughtProgress);
-	}
-	else if (ReelInSoundCueObject && bReelSoundActive)
-	{
-		if (ReelSoundTimer >= 0.6)
-		{
-			bReelSoundActive = false;
-			ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
-		}
-		else
-		{
-			ReelSoundTimer += deltaTime;
-		}
-	}
-	
 }
 
 //När man fångat fisken (efter fiske)
@@ -449,22 +411,64 @@ AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
 void AProd_grupp8Character::StartFishFighting()
 {
 	bFishIsFighting = true;
-	FishFightTimer = 0.0f;
+	FishFightTimer = FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 4.0f;
+	FishFightScore = 100.0 - FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 30.0f;
+	UE_LOG(LogTemp, Warning, TEXT("The fish is fighting back! %f"), FishFightScore);
 }
 
-void AProd_grupp8Character::FishFighting(float deltaTime)
+//(Under tiden man fiskar)
+void AProd_grupp8Character::Fishing(float DeltaTime, float ReelValue)
 {
+	caughtProgress += ReelValue;
+	if (caughtProgress >= ProgressToCatch)
+	{
+		Caught();
+	}
+}
+
+float AProd_grupp8Character::Reeling(float DeltaTime)
+{
+	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
+	{
+		ReelSoundTimer = 0.0f;
+		if (ReelInSoundCueObject && !bReelSoundActive)
+		{
+			bReelSoundActive = true;
+			ReelInSoundCueObject->FadeIn(0.4f);
+		}
+		
+		return DeltaTime * ReelStickDegree * 5.0f;
+	}
+	if (ReelInSoundCueObject && bReelSoundActive)
+	{
+		if (ReelSoundTimer >= 0.6)
+		{
+			bReelSoundActive = false;
+			ReelInSoundCueObject->FadeOut(0.35f, 0.0f);
+		}
+		else
+		{
+			ReelSoundTimer += DeltaTime;
+		}
+	}
+	return 0.0;
+}
+
+void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
+{
+	FishFightTimer -= DeltaTime;
+	if (FishFightTimer < 0.0)
+	{
+		bFishIsFighting = false;
+		FTimerHandle UnusedHandle;
+		float NextFishFight = FMath::RandRange(3.0, 5.0);
+		GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
+	}
 	
-}
-
-void AProd_grupp8Character::FishFightingLeft(float deltaTime)
-{
-	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(100 * deltaTime,0,0));
-}
-
-void AProd_grupp8Character::FishFightingRight(float deltaTime)
-{
-	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(-100 * deltaTime,0,0));
+	//FishFightScore -= ReelValue;
+	//if (FishFightScore < 0.0) { bFishIsFighting = false;}
+	
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(ReelHapticEffect);
 }
 
 void AProd_grupp8Character::DoShopTransaction()

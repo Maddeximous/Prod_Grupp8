@@ -101,7 +101,10 @@ protected:
 	class USoundBase* SonarSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Haptics")
-	class UForceFeedbackEffect* FishHapticEffect;
+	class UForceFeedbackEffect* ReelHapticEffect;
+	
+	UPROPERTY(EditAnywhere, Category ="Haptics")
+	class UForceFeedbackEffect* FightHapticEffect;
 	
 	UPROPERTY()
 	UAudioComponent* ReelInSoundCueObject;
@@ -163,7 +166,11 @@ protected:
 	
 	float FishFightTimer = 0.0f;
 	
+	float FishFightScore = 0.0f;
+	
 	float ReelSoundTimer = 0.0f;
+	
+	float ProgressToCatch = 0.0f;
 	
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;
@@ -173,6 +180,9 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<APauseMenu> PauseMenu;
+	
+	UPROPERTY()
+	TObjectPtr<AInventory> Inventory;
 
 	
 public:
@@ -257,19 +267,15 @@ protected:
 	
 	void Caught();
 	
-	// bool IsReeling();
-	
-	void Fishing(float deltaTime);
-	
 	AActor* SpawnBobber(FVector SpawnLocation);
 	
 	void StartFishFighting();
 	
-	void FishFighting(float DeltaTime);
+	float Reeling(float DeltaTime);
 	
-	void FishFightingLeft(float DeltaTime);
+	void Fishing(float DeltaTime, float ReelValue);
 	
-	void FishFightingRight(float DeltaTime);
+	void FishFighting(float DeltaTime, float ReelValue);
 
 protected:
 
