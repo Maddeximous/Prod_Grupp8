@@ -20,6 +20,11 @@ AShop::AShop()
 
 	TriggerBox->SetBoxExtent(FVector(150.0f, 150.0f, 100.0f)); // Storlek på boxen
 	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
+	
+	// Skapa audio-komponenten och fäst den vid root
+	ShopAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("ShopAudioComponent"));
+	ShopAudioComponent->SetupAttachment(RootComponent);
+	ShopAudioComponent->bAutoActivate = true; // Vi sätter igång det när spelaren går in
 }
 
 // Called when the game starts or when spawned
@@ -204,7 +209,35 @@ void AShop::addDollars()
 	);
 
 }
+void AShop::ToggleSection()
+{
+	if (!shopEnabled)
+	{
+		return;
+	}
 
+	// Om vi är i inventariet -> byt till spö-shoppen
+	if (CurrentSection == EShopSection::Inventory)
+	{
+		CurrentSection = EShopSection::Shop;
+	}
+	// Annars (om vi är i spö-shoppen) -> byt tillbaka till inventariet
+	else
+	{
+		CurrentSection = EShopSection::Inventory;
+	}
+
+	CurrentIndex = 0; // Nollställ index för den nya listan
+
+	GEngine->AddOnScreenDebugMessage(
+		3,
+		5.0f,
+		FColor::Yellow,
+		FString::Printf(TEXT("Money: %d"), dollars)
+	);
+
+	PrintCurrentItem();
+}
 void AShop::MoveLeft()
 {
 	if (shopEnabled)
@@ -582,5 +615,7 @@ void AShop::Transaction()
 
 		PrintCurrentItem();
 	}
+	
 
 }
+

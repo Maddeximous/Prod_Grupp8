@@ -77,6 +77,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* OpenPauseMenuAction;
 	
+	/** Shop Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* ShopTransactionAction;
+	
+	/** Switch Shop View Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input")
+	class UInputAction* SwitchShopViewAction;
 	
 	UPROPERTY(EditAnywhere, Category ="Audio")
 	class USoundBase* ThrowSoundCue;
@@ -217,6 +224,14 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSonar();
 	
+	/** Handles transaction input */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoShopTransaction();
+	
+	/** Handles jump end inputs from either controls or UI interfaces */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoJumpEnd();
+	
 	/** Handles Sway input for LB (right) */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSwayLeft();
@@ -232,9 +247,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoOpenPauseMenu();
 	
-	/** Handles jump end inputs from either controls or UI interfaces */
+	/** Switch Shop view between rods and fish */
 	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpEnd();
+	virtual void DoSwitchShopView();
 	
 	void StartFishing();
 	

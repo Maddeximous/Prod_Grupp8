@@ -15,6 +15,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "GameTelemetry.h"
+#include "Shop.h"
 #include "../../../../../../../Program Files/Epic Games/UE_5.8/Engine/Plugins/Media/AjaMedia/Source/AjaMedia/Private/Shared/AjaMediaAllowPlatformTypes.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
@@ -85,7 +86,13 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		//Pause
 		EnhancedInputComponent->BindAction(OpenPauseMenuAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoOpenPauseMenu);
 		
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::MoveInput);
+
+		// Ändra från Triggered till Started här:
+		EnhancedInputComponent->BindAction(ShopTransactionAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoShopTransaction);
 		
+		// Ändra mellan fisk och fiskespö i shop menyn
+		EnhancedInputComponent->BindAction(SwitchShopViewAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwitchShopView);
 	}
 	else
 	{
@@ -310,7 +317,9 @@ void AProd_grupp8Character::DoCastLine()
 {
 	if (GetController())
 	{
-		if (!bIsFishing && FishInRange)
+		// Kolla om shoppen är öppen via ShopInRange
+		bool bIsShopOpen = ShopInRange && ShopInRange->shopEnabled;
+		if (!bIsFishing && FishInRange && !bIsShopOpen)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Fish"));
 			
@@ -456,4 +465,20 @@ void AProd_grupp8Character::FishFightingLeft(float deltaTime)
 void AProd_grupp8Character::FishFightingRight(float deltaTime)
 {
 	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(-100 * deltaTime,0,0));
+}
+
+void AProd_grupp8Character::DoShopTransaction()
+{
+	if (ShopInRange)
+	{
+		ShopInRange->Transaction();
+	}
+}
+
+void AProd_grupp8Character::DoSwitchShopView()
+{
+	if (ShopInRange && ShopInRange->shopEnabled)
+	{
+		ShopInRange->ToggleSection();
+	}
 }

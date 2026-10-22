@@ -8,6 +8,8 @@
 #include "Rod.h"
 #include "Inventory.h"
 #include "Components/BoxComponent.h"
+#include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
 #include "Shop.generated.h"
 
 
@@ -48,6 +50,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<ARod*> Rods;
+	
+	// Ljudkomponenten som sköter uppspelningen
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
+	TObjectPtr<UAudioComponent> ShopAudioComponent;
+
+	// Själva ljudet (t.ex. bakgrundsmusik eller miljöbjäfs i shoppen)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> ShopAmbientSound;
 
 	UFUNCTION()
 	void OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -60,6 +70,8 @@ public:
 	void CloseShop();
 	void ToggleShop();
 	void addDollars();
+	void Transaction();
+	void ToggleSection();
 
 protected:
 	// Called when the game starts or when spawned
@@ -77,9 +89,6 @@ private:
 	void MoveRight();
 	void MoveUp();
 	void MoveDown();
-
-	void Transaction();
-
 	void PrintCurrentItem();
 	void OpenShop();
 };
