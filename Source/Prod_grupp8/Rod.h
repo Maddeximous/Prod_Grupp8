@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "FishTypes.h"
 #include "Rod.generated.h"
 
 UCLASS()
@@ -29,6 +30,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 luck;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rod")
+	ERodTier RodTier = ERodTier::Starter;
 
 protected:
 	// Called when the game starts or when spawned

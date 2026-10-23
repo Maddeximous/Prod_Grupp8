@@ -21,8 +21,36 @@ AFishManager::AFishManager()
 void AFishManager::BeginPlay()
 {
 	Super::BeginPlay();
-	Inventory = Cast<AInventory>(UGameplayStatics::GetActorOfClass(this, AInventory::StaticClass()));
+
+	UE_LOG(LogTemp, Error, TEXT("FISH MANAGER BEGINPLAY: %s"), *GetName());
 	
+	Inventory = Cast<AInventory>(
+		UGameplayStatics::GetActorOfClass(this, AInventory::StaticClass()));
+
+	if (!IsValid(Inventory))
+	{
+		UE_LOG(LogTemp, Error,
+			TEXT("FishManager: kunde inte hitta någon AInventory i nivån."));
+		return;
+	}
+
+	// Om inventoryt redan har spön, använd det första som startspö.
+	if (!Inventory->EquippedRod && Inventory->Rods.Num() > 0)
+	{
+		Inventory->EquipRod(Inventory->Rods[0]);
+	}
+
+	if (!Inventory->EquippedRod)
+	{
+		UE_LOG(LogTemp, Error,
+			TEXT("FishManager: inget EquippedRod. Lägg till ett startspö i Inventory."));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("FishManager: använder spö %s"),
+		*Inventory->EquippedRod->name.ToString());
+
 	SpawnInitialFish();
 }
 
@@ -42,31 +70,59 @@ void AFishManager::SpawnInitialFish()
 	for (int32 i = 0; i < AmountOfFish; i++)
 	{
 		SpawnRandomFish();
+		UE_LOG(LogTemp, Warning, TEXT("We have spawned fish!"));
 	}
 }
 
 AFish* AFishManager::SpawnRandomFish()
 {
-	if (FishDataBase.Num() == 0 || SpawnAreaBox == nullptr)
+	if (FishDataBase.Num() == 0 || !SpawnAreaBox)
 	{
 		return nullptr;
 	}
-	
-	//Fixa en random fish type från Enum. 
+
 	TArray<EFishType> AvailableTypes;
-	FishDataBase.GetKeys(AvailableTypes);
-	EFishType RandomType = AvailableTypes[FMath::RandRange(0, AvailableTypes.Num() - 1)];
-	
-	//Hämta en random plats från SpawnAreaBox (det tillåtna området att fiska)
-	FVector BoxOrigin = SpawnAreaBox->GetComponentLocation();
-	FVector BoxExtent = SpawnAreaBox->GetScaledBoxExtent();
-	FVector RandomLocation = FMath::RandPointInBox(FBox(BoxOrigin - BoxExtent, BoxOrigin + BoxExtent));
+
+	for (const auto& Entry : FishDataBase)
+	{
+		if (CanSpawnFishOfType(Entry.Key))
+		{
+			AvailableTypes.Add(Entry.Key);
+		}
+	}
+
+	if (AvailableTypes.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("No fish are available for the equipped rod."));
+		return nullptr;
+	}
+
+	const EFishType RandomType =
+		AvailableTypes[FMath::RandRange(0, AvailableTypes.Num() - 1)];
+
+	const FVector BoxOrigin = SpawnAreaBox->GetComponentLocation();
+	const FVector BoxExtent = SpawnAreaBox->GetScaledBoxExtent();
+
+	FVector RandomLocation = FMath::RandPointInBox(
+		FBox(BoxOrigin - BoxExtent, BoxOrigin + BoxExtent));
+
 	RandomLocation.Z = BoxOrigin.Z;
-	
-	
-	UE_LOG(LogTemp, Warning, TEXT("Random Fish: %s"), *RandomLocation.ToString());
-	
+
 	return SpawnFishOfType(RandomType, RandomLocation);
+}
+
+bool AFishManager::CanSpawnFishOfType(EFishType FishType) const
+{
+	const FFishData* FishInfo = FishDataBase.Find(FishType);
+
+	if (!FishInfo || !Inventory || !Inventory->EquippedRod)
+	{
+		return false;
+	}
+
+	return static_cast<uint8>(Inventory->EquippedRod->RodTier) >=
+		   static_cast<uint8>(FishInfo->RequiredRodTier);
 }
 
 void AFishManager::OnFishCaught(AFish* CaughtFish)
@@ -97,29 +153,35 @@ void AFishManager::OnFishCaught(AFish* CaughtFish)
 	}
 }
 
-AFish* AFishManager::SpawnFishOfType(EFishType TypeToSpawn, FVector SpawnLocation)
+AFish* AFishManager::SpawnFishOfType(
+	EFishType TypeToSpawn,
+	FVector SpawnLocation)
 {
-	if (!FishDataBase.Contains(TypeToSpawn))
+	if (!CanSpawnFishOfType(TypeToSpawn))
 	{
 		return nullptr;
 	}
-	
-	FFishData FishInfo = FishDataBase[TypeToSpawn];
-	
-	//skapar en ny fisk. 
-	FRotator SpawnRotation = FRotator::ZeroRotator;
-	AFish* NewFish = GetWorld()->SpawnActor<AFish>(FishToSpawn, SpawnLocation, SpawnRotation);
-	
+
+	const FFishData* FishInfo = FishDataBase.Find(TypeToSpawn);
+	if (!FishInfo)
+	{
+		return nullptr;
+	}
+
+	AFish* NewFish = GetWorld()->SpawnActor<AFish>(
+		FishToSpawn,
+		SpawnLocation,
+		FRotator::ZeroRotator);
+
 	if (NewFish)
 	{
-		float RandomWeight = FMath::RandRange(FishInfo.MinWeight, FishInfo.MaxWeight);
-		
 		NewFish->FishSpecies = TypeToSpawn;
-		NewFish->Weight = RandomWeight;
-		UE_LOG(LogTemp, Warning, TEXT("Fish Type: %hdd, Fish Weight: %f"), NewFish->FishSpecies, NewFish->Weight);
+		NewFish->Weight =
+			FMath::RandRange(FishInfo->MinWeight, FishInfo->MaxWeight);
+
+		SpawnedFish.Add(NewFish);
 	}
-	
-	SpawnedFish.Add(NewFish);
+
 	return NewFish;
 }
 

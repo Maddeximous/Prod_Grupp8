@@ -18,8 +18,6 @@ void AInventory::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	SpawnTestFish();
-	
 }
 
 // Called every frame
@@ -92,4 +90,11 @@ void AInventory::InspectInventory()
 	}
 }
 
+void AInventory::EquipRod(ARod* RodToEquip)
+{
+	if (IsValid(RodToEquip) && Rods.Contains(RodToEquip))
+	{
+		EquippedRod = RodToEquip;
+	}
+}
 
