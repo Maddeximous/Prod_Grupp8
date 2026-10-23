@@ -31,6 +31,8 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void SpawnTestFish();
+	
+	void InspectInventory();
 
 
 

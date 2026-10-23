@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 
 #include "Shop.h"
 #include "ShopWidget.h"
@@ -8,38 +6,50 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h"
 #include "InputCoreTypes.h"
+#include "Prod_grupp8Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AShop::AShop()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
+	RootComponent = TriggerBox; // Sätt som Root så den syns i spelet
+
+	TriggerBox->SetBoxExtent(FVector(150.0f, 150.0f, 100.0f)); // Storlek på boxen
+	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
+	
+	// Skapa audio-komponenten och fäst den vid root
+	ShopAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("ShopAudioComponent"));
+	ShopAudioComponent->SetupAttachment(RootComponent);
+	ShopAudioComponent->bAutoActivate = true; // Vi sätter igång det när spelaren går in
 }
 
 // Called when the game starts or when spawned
 void AShop::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (TriggerBox)
+	{
+		TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AShop::OnBoxOverlapBegin);
+		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AShop::OnBoxOverlapEnd); // Avsluta shoppen när man går ut ur zonen
+	}
 
 	if (!PC)
 		return;
 
 	EnableInput(PC);
-	
 
 	if (!InputComponent)
 		return;
-	
-	InputComponent->BindKey(
-		EKeys::I,
-		IE_Pressed,
-		this,
-		&AShop::ToggleShop
-	);
-	
+
+	InputComponent->BindKey(EKeys::I, IE_Pressed, this, &AShop::ToggleShop);
+
 	if (true)
 	{
 		InputComponent->BindKey(
@@ -48,7 +58,7 @@ void AShop::BeginPlay()
 			this,
 			&AShop::Transaction
 		);
-	
+
 		InputComponent->BindKey(
 			EKeys::E,
 			IE_Pressed,
@@ -86,8 +96,8 @@ void AShop::BeginPlay()
 		PrintCurrentItem();
 	}
 
-	
-	
+
+
 	if (ShopWidgetClass)
 	{
 		UShopWidget* ShopWidget = CreateWidget<UShopWidget>(
@@ -103,10 +113,10 @@ void AShop::BeginPlay()
 				if (Rod)
 				{
 					ShopText += FString::Printf(
-					TEXT("Rod: %s | price: %d | luck: %d"),
-					*Rod->name.ToString(),
-					Rod->price,
-					Rod->luck
+						TEXT("Rod: %s | price: %d | luck: %d"),
+						*Rod->name.ToString(),
+						Rod->price,
+						Rod->luck
 					);
 				}
 			}
@@ -114,60 +124,127 @@ void AShop::BeginPlay()
 			ShopWidget->SetRodText(ShopText);
 			ShopWidget->AddToViewport();
 		}
+		
 	}
-	
+	// Detta ser till att shoppen officiellt är stängd och skriver ut "Shop Closed" direkt när spelet startar
+	CloseShop();
+}
+void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (OtherActor && OtherActor == Pawn)
+	{
+		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+		{
+			Player->ShopInRange = this;
+		}
+		bCanOpenShop = true;
+		UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
+
+		// Känn av att shoppen är stängd när man går in, och öppna den OMEDELBART
+		if (!shopEnabled)
+		{
+			OpenShop(); // Detta sätter igång allt automatiskt!
+		}
+	}
 }
 
-// Called every frame
+void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+    
+	if (OtherActor && OtherActor == Pawn)
+	{
+		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+		{
+			Player->ShopInRange = nullptr;
+		}
+		bCanOpenShop = false;
+
+		// Stäng shoppen automatiskt när spelaren lämnar zonen
+		if (shopEnabled)
+		{
+			CloseShop();
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
+	}
+}
 void AShop::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (shopEnabled != previousShopEnabled)
 	{
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-
 		if (PC)
 		{
 			if (shopEnabled)
 			{
-				EnableInput(PC);
+				// Shoppen öppnas (valfritt om du vill göra musen synlig etc.)
 			}
 			else
 			{
-				DisableInput(PC);
+				// Shoppen stängs - ta bort DisableInput här!
 			}
 		}
 
 		previousShopEnabled = shopEnabled;
 	}
-
 }
 
 void AShop::addDollars()
 {
-	dollars+= 100;
-	
+	dollars += 100;
+
 	UE_LOG(LogTemp, Warning, TEXT("Dollars: %d"), dollars);
 	GEngine->AddOnScreenDebugMessage(
 		3,
 		5.0f,
 		FColor::Yellow,
 		FString::Printf(
-		TEXT("Money: %d"),
-		dollars
+			TEXT("Money: %d"),
+			dollars
 		)
 	);
 
 }
+void AShop::ToggleSection()
+{
+	if (!shopEnabled)
+	{
+		return;
+	}
 
+	// Om vi är i inventariet -> byt till spö-shoppen
+	if (CurrentSection == EShopSection::Inventory)
+	{
+		CurrentSection = EShopSection::Shop;
+	}
+	// Annars (om vi är i spö-shoppen) -> byt tillbaka till inventariet
+	else
+	{
+		CurrentSection = EShopSection::Inventory;
+	}
+
+	CurrentIndex = 0; // Nollställ index för den nya listan
+
+	GEngine->AddOnScreenDebugMessage(
+		3,
+		5.0f,
+		FColor::Yellow,
+		FString::Printf(TEXT("Money: %d"), dollars)
+	);
+
+	PrintCurrentItem();
+}
 void AShop::MoveLeft()
 {
 	if (shopEnabled)
 	{
 		CurrentSection = EShopSection::Inventory;
 		CurrentIndex = 0;
-	
+
 		GEngine->AddOnScreenDebugMessage(
 			3,
 			5.0f,
@@ -352,44 +429,66 @@ void AShop::PrintCurrentItem()
 					10.0f,
 					FColor::Green,
 					FString::Printf(
-					TEXT("Shop: %s | price: %d | luck: %d"),
-					*CurrentRod->name.ToString(),
-					CurrentRod->price,
-					CurrentRod->luck
+						TEXT("Shop: %s | price: %d | luck: %d"),
+						*CurrentRod->name.ToString(),
+						CurrentRod->price,
+						CurrentRod->luck
 					)
 				);
 			}
 		}
 	}
 }
+void AShop::OpenShop()
+{
+	shopEnabled = true;
+	CurrentSection = EShopSection::Inventory;
+	CurrentIndex = 0;
+
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+	{
+		Player->GetCharacterMovement()->DisableMovement();
+		// Stäng av fiske här om spelarklassen har en flagga för det, t.ex:
+		// Player->bCanFish = false; 
+	}
+
+	GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened"));
+	PrintCurrentItem();
+}
+
+void AShop::CloseShop()
+{
+	shopEnabled = false;
+
+	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+	{
+		Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		// Slå på fiske igen om det behövs
+		// Player->bCanFish = true;
+	}
+
+	GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
+}
 
 void AShop::ToggleShop()
 {
-	AShop::shopEnabled = !AShop::shopEnabled;
-	
-	CurrentSection = EShopSection::Inventory;
-	CurrentIndex = 0;
-	
+	// Om spelaren inte står i zonen ska man inte kunna öppna/stänga med knappen
+	if (!bCanOpenShop)
+	{
+		return;
+	}
+
 	if (shopEnabled)
 	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			10.0f,
-			FColor::Blue,
-			TEXT("Shop Opened")
-		);
+		CloseShop();
 	}
-	if (!shopEnabled)
+	else
 	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			10.0f,
-			FColor::Blue,
-			TEXT("Shop Closed")
-		);
+		OpenShop();
 	}
 }
-
 void AShop::Transaction()
 {
 	if (!PlayerInventory)
@@ -413,7 +512,7 @@ void AShop::Transaction()
 		}
 
 		int32 SellPrice = FMath::RoundToInt(CurrentFish->Weight);
-		
+
 
 		dollars += SellPrice;
 
@@ -516,5 +615,7 @@ void AShop::Transaction()
 
 		PrintCurrentItem();
 	}
+	
 
 }
+

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "FishTypes.h"
+#include "Inventory.h"
 #include "Components/BoxComponent.h" 
 #include "FishManager.generated.h"
 
@@ -34,9 +35,6 @@ public:
 	TArray<AFish*> SpawnedFish;
 	
 	UFUNCTION(BlueprintCallable, Category = "Fishing")
-	void OnFishCaught(AFish* CaughtFish);
-	
-	UFUNCTION(BlueprintCallable, Category = "Fishing")
 	AFish* GetClosestFishToPlayer();
 	
 	void SpawnInitialFish();
@@ -45,7 +43,8 @@ public:
 	
 	AFish* SpawnFishOfType(EFishType TypeToSpawn, FVector SpawnLocation);
 	
-	
+	UPROPERTY()
+	TObjectPtr<AInventory> Inventory;
 
 protected:
 	// Called when the game starts or when spawned
@@ -54,6 +53,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	void PlaySoundOnClosestFish(USoundBase* SoundToPlay);
+	
+	UFUNCTION(BlueprintCallable, Category = "Fishing")
+	void OnFishCaught(AFish* CaughtFish);
 	
 private:
 	FTimerHandle RespawnTimerHandle;

@@ -74,4 +74,22 @@ void AInventory::SpawnTestFish()
 	}
 }
 
+void AInventory::InspectInventory()
+{
+	for (int32 i = 0; i < Fish.Num(); i++)
+	{
+		AFish* FishItem = Fish[i];
+
+		if (FishItem)
+		{
+			GEngine->AddOnScreenDebugMessage(
+					1,
+					10.0f,
+					FColor::Red,
+					TEXT("Reading inventory")
+				);
+		}
+	}
+}
+
 

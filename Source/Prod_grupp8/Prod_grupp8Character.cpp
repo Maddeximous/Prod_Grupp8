@@ -6,11 +6,17 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
+#include "FishManager.h"
+#include "Inventory.h"
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Prod_grupp8.h"
+#include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "OnboardingSubsystem.h"
+#include "Sound/SoundCue.h"
+#include "GameTelemetry.h"
+#include "Shop.h"
+#include "../../../../../../../Program Files/Epic Games/UE_5.8/Engine/Plugins/Media/AjaMedia/Source/AjaMedia/Private/Shared/AjaMediaAllowPlatformTypes.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
 {
@@ -76,11 +82,80 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		
 		// Sway left
 		EnhancedInputComponent->BindAction(SwayLeftAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayLeft);
+		
+		//Pause
+		EnhancedInputComponent->BindAction(OpenPauseMenuAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoOpenPauseMenu);
+		
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::MoveInput);
+
+		// Ändra från Triggered till Started här:
+		EnhancedInputComponent->BindAction(ShopTransactionAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoShopTransaction);
+		
+		// Ändra mellan fisk och fiskespö i shop menyn
+		EnhancedInputComponent->BindAction(SwitchShopViewAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwitchShopView);
 	}
 	else
 	{
 		UE_LOG(LogProd_grupp8, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+}
+void AProd_grupp8Character::BeginPlay()
+{
+	Super::BeginPlay();
+
+	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
+	PauseMenu = Cast<APauseMenu>(UGameplayStatics::GetActorOfClass(this, APauseMenu::StaticClass()));
+
+	if (MoveForwardSoundCue)
+	{
+		// Loops for the whole session; only the pitch changes. Not auto-destroyed.
+		CurrentMovePitch = IdleMovePitch;
+		PreviousYaw = GetActorRotation().Yaw;
+		MoveForwardSoundObject = UGameplayStatics::SpawnSound2D(this, MoveForwardSoundCue, 1.0f, IdleMovePitch, 0.0f, nullptr, true, false);
+	}
+	
+}
+
+void AProd_grupp8Character::UpdateMoveSound(float DeltaTime)
+{
+	if (!MoveForwardSoundObject)
+	{
+		return;
+	}
+
+	UCharacterMovementComponent* Movement = GetCharacterMovement();
+	const FVector Acceleration = Movement->GetCurrentAcceleration();
+
+	// Forward and backward movement both count: acceleration along the actor's forward axis (sign ignored)
+	const float ForwardAccel = FMath::Abs(FVector::DotProduct(Acceleration, GetActorForwardVector()));
+	const bool bMoving = !bIsFishing && Movement->IsMovingOnGround() && ForwardAccel > KINDA_SMALL_NUMBER;
+
+	// Turn speed in degrees/sec, measured from the actor's yaw change since last tick
+	const float CurrentYaw = GetActorRotation().Yaw;
+	// Signed: positive = turning right, negative = turning left
+	const float TurnRate = DeltaTime > KINDA_SMALL_NUMBER
+		? FMath::FindDeltaAngleDegrees(PreviousYaw, CurrentYaw) / DeltaTime
+		: 0.0f;
+	PreviousYaw = CurrentYaw;
+
+	// Stationary -> idle pitch (slightly raised while turning on the spot);
+	// moving forward or backward -> pitch follows acceleration
+	float TargetPitch = IdleMovePitch;
+	if (bMoving)
+	{
+		// 0..1 acceleration relative to the maximum the movement component allows
+		const float AccelRatio = FMath::Clamp(ForwardAccel / FMath::Max(Movement->GetMaxAcceleration(), 1.0f), 0.0f, 1.0f);
+		TargetPitch = FMath::Lerp(MinMovePitch, MaxMovePitch, AccelRatio);
+	}
+	else if (!bIsFishing)
+	{
+		const float TurnRatio = FMath::Clamp(FMath::Abs(TurnRate) / FMath::Max(MaxTurnRateForPitch, 1.0f), 0.0f, 1.0f);
+		const float TurnBoost = TurnRate > 0.0f ? TurnRightPitchBoost : TurnLeftPitchBoost;
+		TargetPitch = IdleMovePitch + TurnBoost * TurnRatio;
+	}
+
+	CurrentMovePitch = FMath::FInterpTo(CurrentMovePitch, TargetPitch, DeltaTime, MovePitchInterpSpeed);
+	MoveForwardSoundObject->SetPitchMultiplier(CurrentMovePitch);
 }
 
 void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
@@ -102,7 +177,6 @@ void AProd_grupp8Character::LookInput(const FInputActionValue& Value)
 
 }
 
-
 void AProd_grupp8Character::DoMove(float Right, float Forward)
 {
 	if (GetController())
@@ -115,9 +189,6 @@ void AProd_grupp8Character::DoMove(float Right, float Forward)
 		}
 	}
 }
-
-
-
 void AProd_grupp8Character::DoJumpStart()
 {
 	// pass Jump to the character
@@ -132,28 +203,18 @@ void AProd_grupp8Character::DoJumpEnd()
 void AProd_grupp8Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UpdateMoveSound(DeltaTime);
 	if (bIsFishOnHook)
 	{
+		float ReelValue = Reeling(DeltaTime);
 		if (bFishIsFighting)
 		{
-			FishFightTimer += DeltaTime;
-			if (FishFightTimer > 4)
-			{
-				bFishIsFighting = false;
-			}
 			
-			if (FMath::RandBool())
-			{
-				FishFightingLeft(DeltaTime);
-			}
-			else
-			{
-				FishFightingRight(DeltaTime);
-			}
+			FishFighting(DeltaTime, ReelValue);
 		}
 		else
 		{
-			Fishing(DeltaTime);
+			Fishing(DeltaTime, ReelValue);
 		}
 	}
 }
@@ -165,7 +226,11 @@ void AProd_grupp8Character::DoSonar()
 		if (!bIsFishing)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pling"));
-			UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("SonarPinged"));
+			FishManager -> PlaySoundOnClosestFish(SonarSoundCue);
+			if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+			{
+				Telemetry->RecordAButtonPress();
+			}
 		}
 	}
 }
@@ -206,6 +271,12 @@ void AProd_grupp8Character::DoAim(float Yaw, float Pitch)
 {
 	if (GetController())
 	{
+		// Om shoppen är öppen, lås blicken/kameran
+		if (ShopInRange && ShopInRange->shopEnabled)
+		{
+			return;
+		}
+
 		if (!bIsFishing)
 		{
 			// pass the rotation inputs
@@ -214,16 +285,16 @@ void AProd_grupp8Character::DoAim(float Yaw, float Pitch)
 		}
 	}
 }
-
 void AProd_grupp8Character::DoReelLine(float Right, float Down)
 {
 	if (GetController())
 	{
 		if (bIsFishOnHook)
 		{
-			FVector2d NewReelStickPosition = FVector2d(Right, Down).GetSafeNormal();
+			FVector2d NewReelStickPosition = FVector2d(Right, Down);
+			if (NewReelStickPosition.Length() < 0.8) {NewReelStickPosition = FVector2D(0.0f, 0.0f);}
 			// Räkna ut vinkeln via arccosine av dot product
-			float Dot = FVector2D::DotProduct(NewReelStickPosition, ReelStickPosition.GetSafeNormal());
+			float Dot = FVector2D::DotProduct(NewReelStickPosition.GetSafeNormal(), ReelStickPosition.GetSafeNormal());
 			float AngleInRadians = FMath::Acos(Dot);
 			
 			ReelStickDegree = FMath::RadiansToDegrees(AngleInRadians);
@@ -236,52 +307,65 @@ void AProd_grupp8Character::DoCastLine()
 {
 	if (GetController())
 	{
-		if (!bIsFishing && FishInRange)
+		// Kolla om shoppen är öppen via ShopInRange
+		bool bIsShopOpen = ShopInRange && ShopInRange->shopEnabled;
+		if (!bIsFishing && FishInRange && !bIsShopOpen)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Fish"));
 			
 			StartFishing();
 		}
+		else if (!bIsFishing && ShopInRange)
+		{
+			ShopInRange -> ToggleShop();
+		}
 	}
+}
+
+void AProd_grupp8Character::DoOpenPauseMenu()
+{
+	PauseMenu -> TogglePauseMenu();
 }
 
 void AProd_grupp8Character::StartFishing()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Start Fish"));
 	bIsFishing = true;
 	float fTimeToFish = FMath::RandRange(1.0, 3.0);
 	FTimerHandle UnusedHandle;
 	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
 	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
+	if (ReelInSoundCue)
+	{
+		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
+		
+		if (ReelInSoundCueObject)
+		{
+			ReelInSoundCueObject->Stop();
+		}
+	}
 }
 
 //När man har fått napp (innan fiske)
 void AProd_grupp8Character::OnHook()
 {
+	FTimerHandle UnusedHandle;
+	float NextFishFight = FMath::RandRange(3.0, 5.0);
+	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
+	
+	ProgressToCatch = (FishInRange -> Weight * 30 + 100) * FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty;
+	
 	bIsFishOnHook = true;
 	caughtProgress = 0.0f;
+	UGameplayStatics::PlaySound2D(this, OnHookSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
 	//FTimerHandle UnusedHandle;
 	//GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
-}
-
-//(Under tiden man fiskar)
-void AProd_grupp8Character::Fishing(float deltaTime)
-{
-	
-	
-	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
+	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
 	{
-		
-		UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(FishHapticEffect);
-		caughtProgress += deltaTime * ReelStickDegree * 30.0f;
-		if (caughtProgress >= 100)
-		{
-			Caught();
-		}
-		UE_LOG(LogTemp, Warning, TEXT("%f"), caughtProgress);
+		Telemetry->StartReeling();
 	}
-	
 }
 
 //När man fångat fisken (efter fiske)
@@ -290,14 +374,28 @@ void AProd_grupp8Character::Caught()
 	
 	bIsFishing = false;
 	bIsFishOnHook = false;
+	
+	if (ReelInSoundCueObject && bReelSoundActive)
+	{
+		bReelSoundActive = false;
+		ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
+	}
+	
+	UGameplayStatics::PlaySound2D(this, CaughtSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
-	UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("FishCaught"));
 	if (Bobber)
 	{
 		Bobber -> Destroy();
 	}
+	FishManager -> OnFishCaught(FishInRange);
+	
+	FishCaught++;
 	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
 	//Bobber -> Destroy();
+	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+	{
+		Telemetry->EndReeling(TRUE);
+	}
 }
 
 AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
@@ -313,20 +411,78 @@ AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
 void AProd_grupp8Character::StartFishFighting()
 {
 	bFishIsFighting = true;
-	FishFightTimer = 0.0f;
+	FishFightTimer = FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 4.0f;
+	FishFightScore = 100.0 - FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 30.0f;
+	UE_LOG(LogTemp, Warning, TEXT("The fish is fighting back! %f"), FishFightScore);
 }
 
-void AProd_grupp8Character::FishFighting(float deltaTime)
+//(Under tiden man fiskar)
+void AProd_grupp8Character::Fishing(float DeltaTime, float ReelValue)
 {
+	caughtProgress += ReelValue;
+	if (caughtProgress >= ProgressToCatch)
+	{
+		Caught();
+	}
+}
+
+float AProd_grupp8Character::Reeling(float DeltaTime)
+{
+	if (ReelStickDegree > 1.0f && ReelStickDegree < 3.0f)
+	{
+		ReelSoundTimer = 0.0f;
+		if (ReelInSoundCueObject && !bReelSoundActive)
+		{
+			bReelSoundActive = true;
+			ReelInSoundCueObject->FadeIn(0.4f);
+		}
+		
+		return DeltaTime * ReelStickDegree * 5.0f;
+	}
+	if (ReelInSoundCueObject && bReelSoundActive)
+	{
+		if (ReelSoundTimer >= 0.6)
+		{
+			bReelSoundActive = false;
+			ReelInSoundCueObject->FadeOut(0.35f, 0.0f);
+		}
+		else
+		{
+			ReelSoundTimer += DeltaTime;
+		}
+	}
+	return 0.0;
+}
+
+void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
+{
+	FishFightTimer -= DeltaTime;
+	if (FishFightTimer < 0.0)
+	{
+		bFishIsFighting = false;
+		FTimerHandle UnusedHandle;
+		float NextFishFight = FMath::RandRange(3.0, 5.0);
+		GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
+	}
 	
+	//FishFightScore -= ReelValue;
+	//if (FishFightScore < 0.0) { bFishIsFighting = false;}
+	
+	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(ReelHapticEffect);
 }
 
-void AProd_grupp8Character::FishFightingLeft(float deltaTime)
+void AProd_grupp8Character::DoShopTransaction()
 {
-	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(100 * deltaTime,0,0));
+	if (ShopInRange)
+	{
+		ShopInRange->Transaction();
+	}
 }
 
-void AProd_grupp8Character::FishFightingRight(float deltaTime)
+void AProd_grupp8Character::DoSwitchShopView()
 {
-	Bobber->SetActorLocation(Bobber->GetActorLocation() + FVector(-100 * deltaTime,0,0));
+	if (ShopInRange && ShopInRange->shopEnabled)
+	{
+		ShopInRange->ToggleSection();
+	}
 }
