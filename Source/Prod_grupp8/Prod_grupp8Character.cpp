@@ -524,7 +524,7 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 	
 	LineDurability -= FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * ReelValue * 13.0f;
 	if (TensionSoundCueObject) {TensionSoundCueObject -> SetPitchMultiplier(4.0f - LineDurability * (3.0f / 100.0f));}
-	UE_LOG(LogTemp, Warning, TEXT("Pitch %f"), TensionSoundCueObject -> PitchMultiplier);
+	//UE_LOG(LogTemp, Warning, TEXT("Pitch %f"), TensionSoundCueObject -> PitchMultiplier);
 	if (LineDurability <= 0.0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("The fish is loose"));
