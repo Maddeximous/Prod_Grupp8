@@ -95,6 +95,12 @@ protected:
 	class USoundBase* ReelInSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* TensionSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* FightSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
 	class USoundBase* CaughtSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Audio")
@@ -111,6 +117,9 @@ protected:
 	
 	UPROPERTY()
 	UAudioComponent* ReelInSoundCueObject;
+	
+	UPROPERTY()
+	UAudioComponent* TensionSoundCueObject;
 	
 	/** Looping sound that plays constantly; its pitch follows the player's forward acceleration */
 	UPROPERTY(EditAnywhere, Category ="Audio|Movement")
@@ -169,11 +178,11 @@ protected:
 	
 	float FishFightTimer = 0.0f;
 	
-	float FishFightScore = 0.0f;
-	
 	float ReelSoundTimer = 0.0f;
 	
 	float ProgressToCatch = 0.0f;
+	
+	float LineDurability = 0.0f;
 	
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;

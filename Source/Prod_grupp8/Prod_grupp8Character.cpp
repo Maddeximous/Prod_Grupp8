@@ -333,11 +333,13 @@ void AProd_grupp8Character::StartFishing()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Start Fish"));
 	bIsFishing = true;
-	float fTimeToFish = FMath::RandRange(1.0, 3.0);
+	float fTimeToFish = FMath::RandRange(2.0, 5.0);
 	FTimerHandle UnusedHandle;
 	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
 	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
+	FishInRange -> FishingAudioComp -> FadeOut(0.5f, 0.0f);
+	
 	if (ReelInSoundCue)
 	{
 		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
@@ -345,6 +347,15 @@ void AProd_grupp8Character::StartFishing()
 		if (ReelInSoundCueObject)
 		{
 			ReelInSoundCueObject->Stop();
+		}
+	}
+	
+	if (TensionSoundCue)
+	{
+		TensionSoundCueObject = UGameplayStatics::SpawnSound2D(this, TensionSoundCue, 1.0f, 1.0f, 0.0f);
+		if (TensionSoundCueObject)
+		{
+			TensionSoundCueObject->Stop();
 		}
 	}
 }
@@ -356,10 +367,11 @@ void AProd_grupp8Character::OnHook()
 	float NextFishFight = FMath::RandRange(3.0, 5.0);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
 	
-	ProgressToCatch = (FishInRange -> Weight * 50) * FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty;
-	
-	bIsFishOnHook = true;
+	ProgressToCatch = 50 * FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty + FishInRange -> Weight * 5.0f;
+	LineDurability = 100.0;
 	caughtProgress = 0.0f;
+	bIsFishOnHook = true;
+	
 	UGameplayStatics::PlaySound2D(this, OnHookSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("On Hook: %f"), ProgressToCatch);
 	//FTimerHandle UnusedHandle;
@@ -453,8 +465,9 @@ void AProd_grupp8Character::StartFishFighting()
 	{
 		bFishIsFighting = true;
 		FishFightTimer = FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 4.0f;
-		FishFightScore = 100.0 - FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 30.0f;
-		UE_LOG(LogTemp, Warning, TEXT("The fish is fighting back! %f"), FishFightScore);
+		UGameplayStatics::PlaySound2D(this, FightSoundCue, 1.0f, 1.0f, 0.0f);
+		if (TensionSoundCueObject) {TensionSoundCueObject -> Play();}
+		UE_LOG(LogTemp, Warning, TEXT("The fish is fighting back!"));
 	}
 }
 
@@ -477,7 +490,7 @@ float AProd_grupp8Character::Reeling(float DeltaTime)
 		if (ReelInSoundCueObject && !bReelSoundActive)
 		{
 			bReelSoundActive = true;
-			ReelInSoundCueObject->FadeIn(0.4f);
+			ReelInSoundCueObject->FadeIn(0.4f, 0.6f);
 		}
 		
 		return DeltaTime * ReelStickDegree * 10.0f;
@@ -506,13 +519,17 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 		FTimerHandle UnusedHandle;
 		float NextFishFight = FMath::RandRange(5.0, 9.0);
 		GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
+		TensionSoundCueObject -> Stop();
 	}
 	
-	FishFightScore -= ReelValue;
-	if (FishFightScore < 0.0)
+	LineDurability -= FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * ReelValue * 2.0f;
+	if (TensionSoundCueObject) {TensionSoundCueObject -> SetPitchMultiplier(4.0f - LineDurability * (3.0f / 100.0f));}
+	UE_LOG(LogTemp, Warning, TEXT("Pitch %f"), TensionSoundCueObject -> PitchMultiplier);
+	if (LineDurability <= 0.0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("The fish is loose"));
 		Escape();
+		TensionSoundCueObject -> Stop();
 	}
 	
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(ReelHapticEffect);
