@@ -363,15 +363,21 @@ void APauseMenu::OpenFishInventory()
 
 void APauseMenu::GoBack()
 {
+	if (MenuHistory.IsEmpty())
+	{
+		CurrentMenuIndex = 0;
+	}
+	SelectedItemIndex = 0;
+	UE_LOG(LogTemp, Warning, TEXT("=== GOBACK ==="));
 	if (bBrowsingFishInventory)
 	{
 		bBrowsingFishInventory = false;
 		FishList.Empty();
 		CurrentFishIndex = 0;
 
-		CurrentMenuIndex = MenuHistory.Last();
+		CurrentMenuIndex = 0;
 		MenuHistory.Pop();
-
+		UE_LOG(LogTemp, Warning, TEXT("=== EXITING FISH INV ==="));
 		SelectedItemIndex = 0;
 		return;
 	}
