@@ -98,6 +98,9 @@ protected:
 	class USoundBase* CaughtSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* EscapeSoundCue;
+	
+	UPROPERTY(EditAnywhere, Category ="Audio")
 	class USoundBase* SonarSoundCue;
 	
 	UPROPERTY(EditAnywhere, Category ="Haptics")
@@ -272,6 +275,8 @@ protected:
 	void OnHook();
 	
 	void Caught();
+	
+	void Escape();
 	
 	AActor* SpawnBobber(FVector SpawnLocation);
 	
