@@ -207,6 +207,7 @@ void AProd_grupp8Character::Tick(float DeltaTime)
 	if (bIsFishOnHook)
 	{
 		float ReelValue = Reeling(DeltaTime);
+		
 		if (bFishIsFighting)
 		{
 			
@@ -355,12 +356,12 @@ void AProd_grupp8Character::OnHook()
 	float NextFishFight = FMath::RandRange(3.0, 5.0);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
 	
-	ProgressToCatch = (FishInRange -> Weight * 30 + 100) * FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty;
+	ProgressToCatch = (FishInRange -> Weight * 50) * FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty;
 	
 	bIsFishOnHook = true;
 	caughtProgress = 0.0f;
 	UGameplayStatics::PlaySound2D(this, OnHookSoundCue, 1.0f, 1.0f, 0.0f);
-	UE_LOG(LogTemp, Warning, TEXT("On Hook"));
+	UE_LOG(LogTemp, Warning, TEXT("On Hook: %f"), ProgressToCatch);
 	//FTimerHandle UnusedHandle;
 	//GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, 2, false);
 	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
@@ -403,6 +404,39 @@ void AProd_grupp8Character::Caught()
 	OnFishCaught();
 }
 
+void AProd_grupp8Character::Escape()
+{
+	
+	bIsFishing = false;
+	bIsFishOnHook = false;
+	
+	if (ReelInSoundCueObject && bReelSoundActive)
+	{
+		bReelSoundActive = false;
+		ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
+	}
+	
+	//UGameplayStatics::PlaySound2D(this, CaughtSoundCue, 1.0f, 1.0f, 0.0f);
+	UE_LOG(LogTemp, Warning, TEXT("The fish got away"));
+	//UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("FishCaught"));
+	if (Bobber)
+	{
+		Bobber -> Destroy();
+	}
+	//FishManager -> OnFishCaught(FishInRange);
+	
+	//FishCaught++;
+	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
+	//Bobber -> Destroy();
+	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
+	{
+		Telemetry->EndReeling(true);
+	}
+	
+	//Blueprintcallable event for the onboarding
+	//OnFishCaught();
+}
+
 AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
 	FRotator SpawnRotation = FRotator::ZeroRotator;
 	UWorld* World = GetWorld();
@@ -415,16 +449,20 @@ AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
 
 void AProd_grupp8Character::StartFishFighting()
 {
-	bFishIsFighting = true;
-	FishFightTimer = FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 4.0f;
-	FishFightScore = 100.0 - FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 30.0f;
-	UE_LOG(LogTemp, Warning, TEXT("The fish is fighting back! %f"), FishFightScore);
+	if (bIsFishOnHook)
+	{
+		bFishIsFighting = true;
+		FishFightTimer = FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 4.0f;
+		FishFightScore = 100.0 - FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * 30.0f;
+		UE_LOG(LogTemp, Warning, TEXT("The fish is fighting back! %f"), FishFightScore);
+	}
 }
 
 //(Under tiden man fiskar)
 void AProd_grupp8Character::Fishing(float DeltaTime, float ReelValue)
 {
 	caughtProgress += ReelValue;
+	UE_LOG(LogTemp, Warning, TEXT("Fishing: %f"), caughtProgress);
 	if (caughtProgress >= ProgressToCatch)
 	{
 		Caught();
@@ -442,7 +480,7 @@ float AProd_grupp8Character::Reeling(float DeltaTime)
 			ReelInSoundCueObject->FadeIn(0.4f);
 		}
 		
-		return DeltaTime * ReelStickDegree * 5.0f;
+		return DeltaTime * ReelStickDegree * 10.0f;
 	}
 	if (ReelInSoundCueObject && bReelSoundActive)
 	{
@@ -466,12 +504,16 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 	{
 		bFishIsFighting = false;
 		FTimerHandle UnusedHandle;
-		float NextFishFight = FMath::RandRange(3.0, 5.0);
+		float NextFishFight = FMath::RandRange(5.0, 9.0);
 		GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
 	}
 	
-	//FishFightScore -= ReelValue;
-	//if (FishFightScore < 0.0) { bFishIsFighting = false;}
+	FishFightScore -= ReelValue;
+	if (FishFightScore < 0.0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("The fish is loose"));
+		Escape();
+	}
 	
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(ReelHapticEffect);
 }
