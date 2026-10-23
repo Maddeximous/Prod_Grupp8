@@ -333,11 +333,13 @@ void AProd_grupp8Character::StartFishing()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Start Fish"));
 	bIsFishing = true;
-	float fTimeToFish = FMath::RandRange(1.0, 3.0);
+	float fTimeToFish = FMath::RandRange(2.0, 5.0);
 	FTimerHandle UnusedHandle;
 	Bobber = SpawnBobber(this->GetActorLocation() + GetActorForwardVector() * 250);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
 	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
+	FishInRange -> FishingAudioComp -> FadeOut(0.5f, 0.0f);
+	
 	if (ReelInSoundCue)
 	{
 		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
@@ -520,7 +522,7 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 		TensionSoundCueObject -> Stop();
 	}
 	
-	LineDurability -= FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * ReelValue;
+	LineDurability -= FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * ReelValue * 2.0f;
 	if (TensionSoundCueObject) {TensionSoundCueObject -> SetPitchMultiplier(4.0f - LineDurability * (3.0f / 100.0f));}
 	UE_LOG(LogTemp, Warning, TEXT("Pitch %f"), TensionSoundCueObject -> PitchMultiplier);
 	if (LineDurability <= 0.0)
