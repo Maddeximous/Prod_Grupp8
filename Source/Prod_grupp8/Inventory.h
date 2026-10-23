@@ -32,6 +32,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SpawnTestFish();
 	
+	//Det fiskespö so man har på sig just nu
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rods")
+	TObjectPtr<ARod> EquippedRod = nullptr;
+	
+	//En funktion för att equipa ett nytt fiskespö
+	UFUNCTION(BlueprintCallable, Category = "Rods")
+	void EquipRod(ARod* RodToEquip);
+	
 	void InspectInventory();
 
 

@@ -60,6 +60,8 @@ public:
 	void OnFishCaught(AFish* CaughtFish);
 	
 private:
+	bool CanSpawnFishOfType(EFishType FishType) const;
+	
 	FTimerHandle RespawnTimerHandle;
 
 };
