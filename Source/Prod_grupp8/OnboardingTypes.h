@@ -11,7 +11,7 @@ class USoundBase;
 UENUM(BlueprintType)
 enum class EOnboardingStepType : uint8
 {
-	Speak,	// Say Text, continue when finished
+	Speak,	// Text line, not voiced yet: continues right away
 	Sound,	// Play Sound, continue when finished
 	Wait	// Stop until Gate is open (game calls ReportOnboardingEvent)
 };
@@ -25,7 +25,7 @@ struct FOnboardingStep : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Onboarding")
 	EOnboardingStepType Type = EOnboardingStepType::Speak;
 
-	// Speak: the line. Wait: hint repeated if the player is stuck (empty = repeat last line)
+	// Speak: the line (not voiced yet, recorded lines come later). Wait: hint text
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Onboarding", meta = (MultiLine = true))
 	FText Text;
 
@@ -40,7 +40,7 @@ struct FOnboardingStep : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Onboarding")
 	float DelayAfter = 0.f;
 
-	// Wait: repeat the hint every X seconds (0 = never)
+	// Wait: hint interval in seconds (not used right now, kept for the DataTable)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Onboarding")
 	float HintAfter = 0.f;
 };

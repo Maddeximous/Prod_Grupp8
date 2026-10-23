@@ -64,8 +64,6 @@ private:
 	void StartStep(int32 Index);
 	void FinishStep();
 	void Finish();
-	void Say(const FText& Text);
-	bool IsSpeaking() const;
 	FVector GetPawnLocation() const;
 
 	TArray<FOnboardingStep> Steps;
@@ -75,8 +73,6 @@ private:
 	bool bStepDone = false;
 	float StepTime = 0.f;		// time in current step
 	float DelayLeft = 0.f;		// pause after a finished step
-	float HintTime = 0.f;
 	float SoundDuration = 0.f;
 	FVector WaitStartLocation = FVector::ZeroVector;
-	FText LastLine;				// repeated as hint if a Wait step has no text
 };

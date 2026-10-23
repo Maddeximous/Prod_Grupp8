@@ -1,0 +1,92 @@
+=====================================================================
+ THE SPEECH PLUGIN (AudioGameSpeech / Piper) HAS BEEN REMOVED
+ Read this if the project won't open or won't build after you pulled.
+=====================================================================
+
+WHY
+The synthesized voice sounded bad, so we use recorded voice lines now.
+The plugin "AudioGameSpeech" and all code that used it are gone.
+Old build files on your PC still point to the plugin, so you MUST
+rebuild once after pulling.
+
+---------------------------------------------------------------------
+ DO THIS ONCE AFTER PULLING (takes ~5 min)
+---------------------------------------------------------------------
+ 1. Commit (or stash) your own work first.
+ 2. Close Unreal Editor completely.
+ 3. Pull / merge main into your branch.
+ 4. In the project folder, DELETE these folders:
+       Binaries
+       Intermediate
+       Plugins\AudioGameSpeech   (if it is still there)
+    (They are only build files. Nothing in git is lost.)
+ 5. Right-click Prod_grupp8.uproject -> "Generate Visual Studio
+    project files".
+ 6. Open the solution in Rider / Visual Studio and build
+    "Prod_grupp8Editor", Win64, Development Editor.
+ 7. Open the project again. Done.
+
+---------------------------------------------------------------------
+ COMMON ERRORS AND FIXES
+---------------------------------------------------------------------
+
+ERROR: "This project requires the 'AudioGameSpeech' plugin, which
+        could not be found."
+ -> You have an old Prod_grupp8.uproject. Pull main again. If you
+    have local changes to the .uproject, remove the AudioGameSpeech
+    block from "Plugins" by hand. Clicking "Yes" (disable it) also
+    works, but don't commit the .uproject change that makes.
+
+ERROR: "The following modules are missing or built with a different
+        engine version: Prod_grupp8 ... Would you like to rebuild
+        them now?"  -> then "could not be compiled. Try rebuilding
+        from source manually."
+ -> Do NOT click Yes again. Do steps 2, 4, 5, 6 above. The real
+    error message shows up in the IDE's build output.
+
+ERROR when building: "Cannot open include file: 'SpeechSubsystem.h'"
+        or "USpeechSubsystem: undeclared identifier"
+        or "Unable to find module 'AudioGameSpeech'"
+ -> Code on YOUR branch still uses the speech plugin. Search the
+    Source folder for "Speech" and delete those lines:
+       #include "SpeechSubsystem.h"
+       anything with USpeechSubsystem / Speech->Speak(...)
+    In Prod_grupp8.Build.cs, remove "AudioGameSpeech".
+    For recorded lines, use UGameplayStatics::PlaySound2D instead.
+
+ERROR when building: "Cannot open include file:
+        '../../../../(...)/Program Files/Epic Games/...'"
+ -> Never include engine files with a path like that (Rider
+    sometimes adds them automatically). Delete the #include line.
+
+ERROR in a Blueprint: "Unknown class SpeechSubsystem" / red
+        "ERROR" nodes / BP_FirstPersonGameMode won't compile
+ -> Open the Blueprint, delete the red Speech nodes, reconnect
+    the white execution wires around them, Compile, Save.
+
+GIT CONFLICT on BP_FirstPersonGameMode.uasset (or another .uasset)
+ -> Blueprints can't be merged. Keep main's version:
+       git checkout --theirs Content/FirstPerson/Blueprints/BP_FirstPersonGameMode.uasset
+       git add Content/FirstPerson/Blueprints/BP_FirstPersonGameMode.uasset
+    Then redo your own change to it in the editor.
+
+GIT ERROR deleting the plugin folder ("Permission denied",
+        "Device or resource busy", "file in use")
+ -> Unreal or Rider still has piper.exe or the DLL open. Close
+    Unreal, Rider/VS, and end "piper.exe" in Task Manager. Try again.
+
+The onboarding tutorial is silent now
+ -> Expected. Speak steps don't say anything until we add the
+    recorded lines. Wait steps still work.
+
+The pause menu doesn't read items aloud anymore
+ -> Expected. It used the speech plugin. Recorded sounds come later.
+
+---------------------------------------------------------------------
+ RULES FROM NOW ON
+---------------------------------------------------------------------
+ - Don't add the speech plugin back or copy it from an old branch.
+ - Voice = recorded Sound Waves / Sound Cues, played as normal sounds.
+ - The game script (MANUS) is now in Docs/.
+ - Still stuck? Post the FIRST red error line from the IDE build
+   output (not the editor popup) in the group chat.

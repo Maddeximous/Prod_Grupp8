@@ -2,12 +2,10 @@
 
 #include "OnboardingSubsystem.h"
 #include "Engine/DataTable.h"
-#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
-#include "SpeechSubsystem.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogOnboarding, Log, All);
 
@@ -27,23 +25,9 @@ void UOnboardingSubsystem::StartOnboarding(UDataTable* Script)
 	Steps.Reset();
 	TArray<FOnboardingStep*> Rows;
 	Script->GetAllRows<FOnboardingStep>(TEXT("Onboarding"), Rows);
-	TArray<FText> Lines;
 	for (const FOnboardingStep* Row : Rows)
 	{
 		Steps.Add(*Row);
-		if (Row->Type == EOnboardingStepType::Speak)
-		{
-			Lines.Add(Row->Text);
-		}
-	}
-
-	// Render all lines now so they play without delay
-	if (UGameInstance* GI = GetWorld()->GetGameInstance())
-	{
-		if (USpeechSubsystem* Speech = GI->GetSubsystem<USpeechSubsystem>())
-		{
-			Speech->Precache(Lines);
-		}
 	}
 
 	OpenGates.Reset();
@@ -57,13 +41,6 @@ void UOnboardingSubsystem::Skip()
 	if (!bRunning)
 	{
 		return;
-	}
-	if (UGameInstance* GI = GetWorld()->GetGameInstance())
-	{
-		if (USpeechSubsystem* Speech = GI->GetSubsystem<USpeechSubsystem>())
-		{
-			Speech->StopSpeaking();
-		}
 	}
 	UE_LOG(LogOnboarding, Log, TEXT("Onboarding skipped"));
 	Finish();
@@ -112,10 +89,8 @@ void UOnboardingSubsystem::Tick(float DeltaTime)
 	switch (Step.Type)
 	{
 	case EOnboardingStepType::Speak:
-		if (!IsSpeaking())
-		{
-			FinishStep();
-		}
+		// No voice output yet (custom recorded lines come later)
+		FinishStep();
 		break;
 
 	case EOnboardingStepType::Sound:
@@ -133,14 +108,6 @@ void UOnboardingSubsystem::Tick(float DeltaTime)
 		if (OpenGates.Contains(Step.Gate))
 		{
 			FinishStep();
-			break;
-		}
-		// Player stuck: repeat the instruction
-		HintTime += DeltaTime;
-		if (Step.HintAfter > 0.f && HintTime >= Step.HintAfter && !IsSpeaking())
-		{
-			HintTime = 0.f;
-			Say(Step.Text.IsEmpty() ? LastLine : Step.Text);
 		}
 		break;
 	}
@@ -157,14 +124,11 @@ void UOnboardingSubsystem::StartStep(int32 Index)
 	StepIndex = Index;
 	bStepDone = false;
 	StepTime = 0.f;
-	HintTime = 0.f;
 
 	const FOnboardingStep& Step = Steps[Index];
 	switch (Step.Type)
 	{
 	case EOnboardingStepType::Speak:
-		LastLine = Step.Text;
-		Say(Step.Text);
 		UE_LOG(LogOnboarding, Log, TEXT("Step %d: speak \"%s\""), Index, *Step.Text.ToString());
 		break;
 
@@ -204,24 +168,6 @@ void UOnboardingSubsystem::Finish()
 	StepIndex = INDEX_NONE;
 	UE_LOG(LogOnboarding, Log, TEXT("Onboarding finished"));
 	OnOnboardingFinished.Broadcast();
-}
-
-void UOnboardingSubsystem::Say(const FText& Text)
-{
-	if (UGameInstance* GI = GetWorld()->GetGameInstance())
-	{
-		if (USpeechSubsystem* Speech = GI->GetSubsystem<USpeechSubsystem>())
-		{
-			Speech->Speak(Text, false);
-		}
-	}
-}
-
-bool UOnboardingSubsystem::IsSpeaking() const
-{
-	UGameInstance* GI = GetWorld()->GetGameInstance();
-	USpeechSubsystem* Speech = GI ? GI->GetSubsystem<USpeechSubsystem>() : nullptr;
-	return Speech && Speech->IsSpeaking();
 }
 
 FVector UOnboardingSubsystem::GetPawnLocation() const
