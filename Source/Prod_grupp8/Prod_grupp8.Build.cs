@@ -24,8 +24,6 @@ public class Prod_grupp8 : ModuleRules
             "DeveloperSettings"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "AudioGameSpeech" });
-
 		PublicIncludePaths.AddRange(new string[] {
 			"Prod_grupp8",
 			"Prod_grupp8/Variant_Horror",

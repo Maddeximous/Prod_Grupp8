@@ -16,7 +16,7 @@
 #include "Sound/SoundCue.h"
 #include "GameTelemetry.h"
 #include "Shop.h"
-#include "../../../../../../../Program Files/Epic Games/UE_5.8/Engine/Plugins/Media/AjaMedia/Source/AjaMedia/Private/Shared/AjaMediaAllowPlatformTypes.h"
+#include "OnboardingSubsystem.h"
 
 AProd_grupp8Character::AProd_grupp8Character()
 {
@@ -226,6 +226,7 @@ void AProd_grupp8Character::DoSonar()
 		if (!bIsFishing)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pling"));
+			UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("SonarPinged"));
 			FishManager -> PlaySoundOnClosestFish(SonarSoundCue);
 			if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
 			{
@@ -383,6 +384,7 @@ void AProd_grupp8Character::Caught()
 	
 	UGameplayStatics::PlaySound2D(this, CaughtSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("You caught the fish"));
+	UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("FishCaught"));
 	if (Bobber)
 	{
 		Bobber -> Destroy();
@@ -394,7 +396,7 @@ void AProd_grupp8Character::Caught()
 	//Bobber -> Destroy();
 	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
 	{
-		Telemetry->EndReeling(TRUE);
+		Telemetry->EndReeling(true);
 	}
 	
 	//Blueprintcallable event for the onboarding

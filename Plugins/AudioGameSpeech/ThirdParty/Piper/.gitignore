@@ -1,5 +1,0 @@
-# Piper is committed so a fresh clone speaks with no setup (root .gitignore ignores *.exe/*.dll).
-!*.exe
-!*.dll
-pkgconfig/
-libtashkeel_model.ort

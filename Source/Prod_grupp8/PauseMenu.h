@@ -50,7 +50,6 @@ private:
 	void HandleBack();
 
 	void UpdateDebugText();
-	void VoiceState();
 	
 	bool bBrowsingFishInventory = false;
 	int32 CurrentFishIndex = 0;

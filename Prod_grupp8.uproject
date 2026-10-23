@@ -32,13 +32,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "AudioGameSpeech",
-			"Enabled": true,
-			"PlatformAllowList": [
-				"Win64"
-			]
-		},
-		{
 			"Name": "WaveformEditor",
 			"Enabled": true
 		}
