@@ -396,6 +396,9 @@ void AProd_grupp8Character::Caught()
 	{
 		Telemetry->EndReeling(TRUE);
 	}
+	
+	//Blueprintcallable event for the onboarding
+	OnFishCaught();
 }
 
 AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){

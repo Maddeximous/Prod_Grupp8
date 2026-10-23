@@ -188,6 +188,9 @@ protected:
 public:
 	AProd_grupp8Character();
 	
+	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
+	void OnFishSphereEntered();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	int FishCaught = 0;
 	
@@ -260,6 +263,9 @@ protected:
 	/** Switch Shop view between rods and fish */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSwitchShopView();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
+	void OnFishCaught();
 	
 	void StartFishing();
 	

@@ -105,6 +105,11 @@ void AFish::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 				FishingAudioComp->Play();
 			}
 		}
+		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
+		{
+			Player->FishInRange = this;
+			Player->OnFishSphereEntered();
+		}
 	}
 }
 
