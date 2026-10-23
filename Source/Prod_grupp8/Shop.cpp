@@ -589,9 +589,11 @@ void AShop::Transaction()
 		NewRod->name = CurrentRod->name;
 		NewRod->price = CurrentRod->price;
 		NewRod->luck = CurrentRod->luck;
+		NewRod->RodTier = CurrentRod->RodTier; // Kopiera spönivån från butiksspöet
 
 		dollars -= RodPrice;
-		PlayerInventory->Rods.Add(NewRod);
+		PlayerInventory->Rods.Add(NewRod);   // Spara det köpta spöet i inventoryt
+		PlayerInventory->EquipRod(NewRod);   // Utrusta det köpta spöet direkt
 
 		GEngine->AddOnScreenDebugMessage(
 			2,

@@ -26,6 +26,14 @@ enum class EFishType : uint8
 	
 };
 
+UENUM(BlueprintType)
+enum class ERodTier : uint8
+{
+	Starter  UMETA(DisplayName = "Startspö"),
+	Standard UMETA(DisplayName = "Standardspö"),
+	Advanced UMETA(DisplayName = "Avancerat spö")
+};
+
 USTRUCT(BlueprintType)
 struct FFishData
 {
@@ -42,6 +50,9 @@ struct FFishData
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FishData")
 	float CatchDifficulty;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FishData")
+	ERodTier RequiredRodTier = ERodTier::Starter;
 	
 };
 
