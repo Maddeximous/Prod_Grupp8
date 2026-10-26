@@ -69,10 +69,15 @@ void UAudioOptionsWidget::NativeOnInitialized()
 	Button_Back->SetNavigationRuleBase(EUINavigation::Down, EUINavigationRule::Stop);
 	Button_Back->SetNavigationRuleBase(EUINavigation::Left, EUINavigationRule::Stop);
 	Button_Back->SetNavigationRuleBase(EUINavigation::Right, EUINavigationRule::Stop);
+	// On the sliders, Left/Right navigation steps the value by 0.1 instead of moving focus.
+	FCustomWidgetNavigationDelegate LeftDelegate;
+	LeftDelegate.BindDynamic(this, &UAudioOptionsWidget::OnNavLeft);
+	FCustomWidgetNavigationDelegate RightDelegate;
+	RightDelegate.BindDynamic(this, &UAudioOptionsWidget::OnNavRight);
 	for (EAudioChannel Channel : AllChannels)
 	{
-		GetSlider(Channel)->SetNavigationRuleBase(EUINavigation::Left, EUINavigationRule::Stop);
-		GetSlider(Channel)->SetNavigationRuleBase(EUINavigation::Right, EUINavigationRule::Stop);
+		GetSlider(Channel)->SetNavigationRuleCustom(EUINavigation::Left, LeftDelegate);
+		GetSlider(Channel)->SetNavigationRuleCustom(EUINavigation::Right, RightDelegate);
 	}
 }
 
@@ -272,6 +277,32 @@ void UAudioOptionsWidget::OnSFXChanged(float Value)      { HandleChanged(EAudioC
 void UAudioOptionsWidget::OnAmbienceChanged(float Value) { HandleChanged(EAudioChannel::Ambience, Value); }
 void UAudioOptionsWidget::OnMusicChanged(float Value)    { HandleChanged(EAudioChannel::Music, Value); }
 void UAudioOptionsWidget::OnDialogueChanged(float Value) { HandleChanged(EAudioChannel::Dialogue, Value); }
+
+UWidget* UAudioOptionsWidget::OnNavLeft(EUINavigation NavDirection)  { return StepFocusedSlider(-1); }
+UWidget* UAudioOptionsWidget::OnNavRight(EUINavigation NavDirection) { return StepFocusedSlider(+1); }
+
+UWidget* UAudioOptionsWidget::StepFocusedSlider(int32 Direction)
+{
+	for (EAudioChannel Channel : AllChannels)
+	{
+		USlider* Slider = GetSlider(Channel);
+		if (Slider && Slider->HasAnyUserFocus())
+		{
+			const int32 NewStep = FMath::Clamp(
+				FMath::RoundToInt(Slider->GetValue() * UAudioSettingsSubsystem::NumSteps) + Direction,
+				0, UAudioSettingsSubsystem::NumSteps);
+			const float NewValue = NewStep / static_cast<float>(UAudioSettingsSubsystem::NumSteps);
+
+			if (!FMath::IsNearlyEqual(Slider->GetValue(), NewValue))
+			{
+				Slider->SetValue(NewValue);
+				HandleChanged(Channel, NewValue);
+			}
+			return Slider; // keep focus on the same slider
+		}
+	}
+	return nullptr;
+}
 
 void UAudioOptionsWidget::HandleChanged(EAudioChannel Channel, float Value)
 {

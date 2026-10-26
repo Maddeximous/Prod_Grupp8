@@ -1,6 +1,6 @@
 // AudioOptionsWidget.h
 // Parent class for your WBP_AudioOptions widget blueprint.
-// Replace YOURGAME_API with your module's API macro.
+// PROD_GRUPP8_API is the API macro of the Prod_grupp8 module.
 
 #pragma once
 
@@ -70,6 +70,11 @@ protected:
 
 private:
 	UFUNCTION() void OnBackClicked();
+
+	// Left/Right (d-pad, stick, arrow keys) change the focused slider directly, no "A to lock" needed.
+	UFUNCTION() UWidget* OnNavLeft(EUINavigation NavDirection);
+	UFUNCTION() UWidget* OnNavRight(EUINavigation NavDirection);
+	UWidget* StepFocusedSlider(int32 Direction);
 	void GoBack();
 	bool bBackFocused = false;
 

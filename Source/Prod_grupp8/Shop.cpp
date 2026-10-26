@@ -1,4 +1,3 @@
-
 #include "Shop.h"
 #include "ShopWidget.h"
 #include "Inventory.h"
@@ -9,126 +8,50 @@
 #include "Prod_grupp8Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-// Sets default values
 AShop::AShop()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	// Nothing in the shop needs to tick anymore
+	PrimaryActorTick.bCanEverTick = false;
 
 	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
-	RootComponent = TriggerBox; // Sätt som Root så den syns i spelet
+	RootComponent = TriggerBox;
 
-	TriggerBox->SetBoxExtent(FVector(150.0f, 150.0f, 100.0f)); // Storlek på boxen
+	TriggerBox->SetBoxExtent(FVector(150.0f, 150.0f, 100.0f));
 	TriggerBox->SetCollisionProfileName(TEXT("Trigger"));
-	
-	// Skapa audio-komponenten och fäst den vid root
+
 	ShopAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("ShopAudioComponent"));
 	ShopAudioComponent->SetupAttachment(RootComponent);
-	ShopAudioComponent->bAutoActivate = true; // Vi sätter igång det när spelaren går in
+	ShopAudioComponent->bAutoActivate = true;
 }
 
-// Called when the game starts or when spawned
 void AShop::BeginPlay()
 {
 	Super::BeginPlay();
-
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-
+	
+	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
+	
 	if (TriggerBox)
 	{
 		TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AShop::OnBoxOverlapBegin);
-		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AShop::OnBoxOverlapEnd); // Avsluta shoppen när man går ut ur zonen
+		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AShop::OnBoxOverlapEnd);
 	}
-
-	if (!PC)
-		return;
-
-	EnableInput(PC);
-
-	if (!InputComponent)
-		return;
-
-	InputComponent->BindKey(EKeys::I, IE_Pressed, this, &AShop::ToggleShop);
-
-	if (true)
-	{
-		InputComponent->BindKey(
-			EKeys::T,
-			IE_Pressed,
-			this,
-			&AShop::Transaction
-		);
-
-		InputComponent->BindKey(
-			EKeys::E,
-			IE_Pressed,
-			this,
-			&AShop::addDollars
-		);
-		InputComponent->BindKey(
-			EKeys::Left,
-			IE_Pressed,
-			this,
-			&AShop::MoveLeft
-		);
-
-		InputComponent->BindKey(
-			EKeys::Right,
-			IE_Pressed,
-			this,
-			&AShop::MoveRight
-		);
-
-		InputComponent->BindKey(
-			EKeys::Up,
-			IE_Pressed,
-			this,
-			&AShop::MoveUp
-		);
-
-		InputComponent->BindKey(
-			EKeys::Down,
-			IE_Pressed,
-			this,
-			&AShop::MoveDown
-		);
-
-		PrintCurrentItem();
-	}
-
-
 
 	if (ShopWidgetClass)
 	{
-		UShopWidget* ShopWidget = CreateWidget<UShopWidget>(
-			GetWorld(),
-			ShopWidgetClass
-		);
+		ShopWidget = CreateWidget<UShopWidget>(GetWorld(), ShopWidgetClass);
 		if (ShopWidget)
 		{
-			FString ShopText;
-
-			for (ARod* Rod : Rods)
-			{
-				if (Rod)
-				{
-					ShopText += FString::Printf(
-						TEXT("Rod: %s | price: %d | luck: %d"),
-						*Rod->name.ToString(),
-						Rod->price,
-						Rod->luck
-					);
-				}
-			}
-
-			ShopWidget->SetRodText(ShopText);
 			ShopWidget->AddToViewport();
 		}
-		
 	}
-	// Detta ser till att shoppen officiellt är stängd och skriver ut "Shop Closed" direkt när spelet startar
+	
+
+	RefreshWidget();
+
+	// Makes sure the shop is officially closed (and prints "Shop Closed") when the game starts
 	CloseShop();
 }
+
 void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
@@ -145,7 +68,7 @@ void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Other
 void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-    
+
 	if (OtherActor && OtherActor == Pawn)
 	{
 		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
@@ -154,7 +77,7 @@ void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 		}
 		bCanOpenShop = false;
 
-		// Stäng shoppen automatiskt när spelaren lämnar zonen
+		// Close the shop automatically when the player leaves the zone
 		if (shopEnabled)
 		{
 			CloseShop();
@@ -163,291 +86,21 @@ void AShop::OnBoxOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 		UE_LOG(LogTemp, Warning, TEXT("Spelare lämnade shoppen!"));
 	}
 }
-void AShop::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 
-	if (shopEnabled != previousShopEnabled)
-	{
-		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-		if (PC)
-		{
-			if (shopEnabled)
-			{
-				// Shoppen öppnas (valfritt om du vill göra musen synlig etc.)
-			}
-			else
-			{
-				// Shoppen stängs - ta bort DisableInput här!
-			}
-		}
-
-		previousShopEnabled = shopEnabled;
-	}
-}
-
-void AShop::addDollars()
-{
-	dollars += 100;
-
-	UE_LOG(LogTemp, Warning, TEXT("Dollars: %d"), dollars);
-	GEngine->AddOnScreenDebugMessage(
-		3,
-		5.0f,
-		FColor::Yellow,
-		FString::Printf(
-			TEXT("Money: %d"),
-			dollars
-		)
-	);
-
-}
-void AShop::ToggleSection()
-{
-	if (!shopEnabled)
-	{
-		return;
-	}
-
-	// Om vi är i inventariet -> byt till spö-shoppen
-	if (CurrentSection == EShopSection::Inventory)
-	{
-		CurrentSection = EShopSection::Shop;
-	}
-	// Annars (om vi är i spö-shoppen) -> byt tillbaka till inventariet
-	else
-	{
-		CurrentSection = EShopSection::Inventory;
-	}
-
-	CurrentIndex = 0; // Nollställ index för den nya listan
-
-	GEngine->AddOnScreenDebugMessage(
-		3,
-		5.0f,
-		FColor::Yellow,
-		FString::Printf(TEXT("Money: %d"), dollars)
-	);
-
-	PrintCurrentItem();
-}
-void AShop::MoveLeft()
-{
-	if (shopEnabled)
-	{
-		CurrentSection = EShopSection::Inventory;
-		CurrentIndex = 0;
-
-		GEngine->AddOnScreenDebugMessage(
-			3,
-			5.0f,
-			FColor::Yellow,
-			FString::Printf(
-				TEXT("Money: %d"),
-				dollars
-			)
-		);
-	}
-
-	PrintCurrentItem();
-}
-
-void AShop::MoveRight()
-{
-	if (shopEnabled)
-	{
-		CurrentSection = EShopSection::Shop;
-		CurrentIndex = 0;
-		GEngine->AddOnScreenDebugMessage(
-			3,
-			5.0f,
-			FColor::Yellow,
-			FString::Printf(
-				TEXT("Money: %d"),
-				dollars
-			)
-		);
-
-		PrintCurrentItem();
-	}
-}
-
-void AShop::MoveUp()
-{
-	if (shopEnabled)
-	{
-		if (CurrentIndex > 0)
-		{
-			CurrentIndex--;
-		}
-
-		PrintCurrentItem();
-	}
-}
-void AShop::MoveDown()
-{
-	if (shopEnabled)
-	{
-		int32 ItemCount = 0;
-
-		if (CurrentSection == EShopSection::Inventory)
-		{
-			if (PlayerInventory)
-			{
-				ItemCount = PlayerInventory->Fish.Num();
-			}
-		}
-		else
-		{
-			ItemCount = Rods.Num();
-		}
-
-		if (CurrentIndex < ItemCount - 1)
-		{
-			CurrentIndex++;
-		}
-
-		PrintCurrentItem();
-	}
-}
-
-void AShop::PrintCurrentItem()
-{
-	if (shopEnabled)
-	{
-		if (!GEngine)
-		{
-			return;
-		}
-
-		if (CurrentSection == EShopSection::Inventory)
-		{
-			if (!PlayerInventory || PlayerInventory->Fish.Num() == 0)
-			{
-				GEngine->AddOnScreenDebugMessage(
-					1,
-					10.0f,
-					FColor::Red,
-					TEXT("Inventory is empty")
-				);
-
-				return;
-			}
-
-			AFish* CurrentFish = PlayerInventory->Fish[CurrentIndex];
-
-			if (CurrentFish)
-			{
-				FString FishTypeName;
-
-				switch (CurrentFish->FishSpecies)
-				{
-				case EFishType::Aborre:
-					FishTypeName = TEXT("Aborre");
-					break;
-
-				case EFishType::Gadda:
-					FishTypeName = TEXT("Gädda");
-					break;
-
-				case EFishType::Gos:
-					FishTypeName = TEXT("Gös");
-					break;
-
-				case EFishType::Insjooring:
-					FishTypeName = TEXT("Insjööring");
-					break;
-
-				case EFishType::Roding:
-					FishTypeName = TEXT("Röding");
-					break;
-
-				case EFishType::Regnbage:
-					FishTypeName = TEXT("Regnbåge");
-					break;
-
-				case EFishType::Sik:
-					FishTypeName = TEXT("Sik");
-					break;
-
-				case EFishType::Lake:
-					FishTypeName = TEXT("Lake");
-					break;
-
-				case EFishType::Braxen:
-					FishTypeName = TEXT("Braxen");
-					break;
-
-				case EFishType::Sutare:
-					FishTypeName = TEXT("Sutare");
-					break;
-
-				default:
-					FishTypeName = TEXT("Unknown");
-					break;
-				}
-
-				GEngine->AddOnScreenDebugMessage(
-					1,
-					10.0f,
-					FColor::Green,
-					FString::Printf(
-						TEXT("INVENTORY: %s | Weight: %.2f kg"),
-						*FishTypeName,
-						CurrentFish->Weight
-					)
-				);
-			}
-		}
-		else
-		{
-			if (Rods.Num() == 0)
-			{
-				GEngine->AddOnScreenDebugMessage(
-					1,
-					10.0f,
-					FColor::Red,
-					TEXT("Shop is empty")
-				);
-
-				return;
-			}
-
-			ARod* CurrentRod = Rods[CurrentIndex];
-
-			if (CurrentRod)
-			{
-				GEngine->AddOnScreenDebugMessage(
-					1,
-					10.0f,
-					FColor::Green,
-					FString::Printf(
-						TEXT("Shop: %s | price: %d | luck: %d"),
-						*CurrentRod->name.ToString(),
-						CurrentRod->price,
-						CurrentRod->luck
-					)
-				);
-			}
-		}
-	}
-}
 void AShop::OpenShop()
 {
 	shopEnabled = true;
-	CurrentSection = EShopSection::Inventory;
-	CurrentIndex = 0;
 
 	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
 	{
 		Player->GetCharacterMovement()->DisableMovement();
-		// Stäng av fiske här om spelarklassen har en flagga för det, t.ex:
-		// Player->bCanFish = false; 
 	}
 
-	GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened"));
-	PrintCurrentItem();
+	ShowMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened | Down: sell all fish | Up: buy next rod"));
+	OnEnterShop();
+	ShowMoney();
+	RefreshWidget();
 }
 
 void AShop::CloseShop()
@@ -458,16 +111,14 @@ void AShop::CloseShop()
 	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
 	{
 		Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		// Slå på fiske igen om det behövs
-		// Player->bCanFish = true;
 	}
 
-	GEngine->AddOnScreenDebugMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
+	ShowMessage(1, 10.0f, FColor::Blue, TEXT("Shop Closed"));
 }
 
 void AShop::ToggleShop()
 {
-	// Om spelaren inte står i zonen ska man inte kunna öppna/stänga med knappen
+	// Can only open/close while standing in the zone
 	if (!bCanOpenShop)
 	{
 		return;
@@ -482,134 +133,157 @@ void AShop::ToggleShop()
 		OpenShop();
 	}
 }
-void AShop::Transaction()
+
+void AShop::SellAllFish()
 {
-	if (!PlayerInventory)
+	if (!shopEnabled || !PlayerInventory)
 	{
 		return;
 	}
 
-	if (CurrentSection == EShopSection::Inventory)
+	// Work on a copy: RemoveFish modifies the inventory's array while we loop over it
+	const auto FishToSell = PlayerInventory->Fish;
+
+	int32 FishSold = 0;
+	int32 TotalPrice = 0;
+
+	for (AFish* Fish : FishToSell)
 	{
-		if (PlayerInventory->Fish.Num() == 0)
+		if (!IsValid(Fish))
 		{
-			return;
+			continue;
 		}
 
-		AFish* CurrentFish =
-			PlayerInventory->Fish[CurrentIndex];
+		TotalPrice += FishManager -> FishDataBase[Fish -> FishSpecies].PricePerKilo * Fish->Weight;
 
-		if (!CurrentFish)
-		{
-			return;
-		}
+		PlayerInventory->RemoveFish(Fish);
+		Fish->Destroy();
+		++FishSold;
+	}
 
-		int32 SellPrice = FMath::RoundToInt(CurrentFish->Weight);
+	if (FishSold == 0)
+	{
+		ShowMessage(2, 3.0f, FColor::Red, TEXT("NO FISH TO SELL"));
+		return;
+	}
 
+	dollars += TotalPrice;
 
-		dollars += SellPrice;
+	ShowMessage(2, 3.0f, FColor::Green, FString::Printf(TEXT("SOLD %d FISH FOR %d DOLLARS"), FishSold, TotalPrice));
+	OnFishSold(FishSold, TotalPrice);
+	ShowMoney();
+}
 
-		PlayerInventory->RemoveFish(CurrentFish);
-		CurrentFish->Destroy();
+void AShop::BuyNextRod()
+{
+	if (!shopEnabled || !PlayerInventory)
+	{
+		return;
+	}
 
-		GEngine->AddOnScreenDebugMessage(
-			2,
-			3.0f,
-			FColor::Green,
-			FString::Printf(
-				TEXT("SOLD FISH FOR %d DOLLARS"),
-				SellPrice
-			)
+	if (!Rods.IsValidIndex(NextRodIndex))
+	{
+		ShowMessage(2, 3.0f, FColor::Yellow, TEXT("ALL RODS OWNED"));
+		return;
+	}
+
+	ARod* RodForSale = Rods[NextRodIndex];
+	if (!RodForSale)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Shop: Rods[%d] is null"), NextRodIndex);
+		return;
+	}
+
+	const int32 RodPrice = RodForSale->price;
+	if (dollars < RodPrice)
+	{
+		ShowMessage(2, 3.0f, FColor::Red, FString::Printf(TEXT("NOT ENOUGH MONEY (%d needed)"), RodPrice));
+		return;
+	}
+
+	// Spawn the same class as the shop rod so Blueprint rods keep their class
+	ARod* NewRod = GetWorld()->SpawnActor<ARod>(
+		RodForSale->GetClass(),
+		FVector::ZeroVector,
+		FRotator::ZeroRotator
+	);
+
+	if (!NewRod)
+	{
+		return;
+	}
+
+	NewRod->name = RodForSale->name;
+	NewRod->price = RodForSale->price;
+	NewRod->luck = RodForSale->luck;
+	NewRod->RodTier = RodForSale->RodTier;
+
+	dollars -= RodPrice;
+	PlayerInventory->Rods.Add(NewRod);
+	PlayerInventory->EquipRod(NewRod);
+
+	++NextRodIndex;
+
+	ShowMessage(2, 3.0f, FColor::Green, FString::Printf(TEXT("BOUGHT %s FOR %d DOLLARS"), *RodForSale->name.ToString(), RodPrice));
+	//OnRodBought(RodForSale->name, RodPrice);
+	ShowMoney();
+	RefreshWidget();
+}
+
+void AShop::addDollars()
+{
+	dollars += 100;
+
+	UE_LOG(LogTemp, Warning, TEXT("Dollars: %d"), dollars);
+	ShowMoney();
+}
+
+void AShop::Transaction()
+{
+	// Replaced by SellAllFish / BuyNextRod
+}
+
+void AShop::ToggleSection()
+{
+	// No sections anymore
+}
+
+void AShop::RefreshWidget()
+{
+	if (!ShopWidget)
+	{
+		return;
+	}
+
+	FString Text;
+
+	if (Rods.IsValidIndex(NextRodIndex) && Rods[NextRodIndex])
+	{
+		const ARod* Rod = Rods[NextRodIndex];
+		Text = FString::Printf(
+			TEXT("Next rod: %s | price: %d | luck: %d"),
+			*Rod->name.ToString(),
+			Rod->price,
+			Rod->luck
 		);
-		GEngine->AddOnScreenDebugMessage(
-			3,
-			5.0f,
-			FColor::Yellow,
-			FString::Printf(
-				TEXT("Money: %d"),
-				dollars
-			)
-		);
-
-		// Make sure the index is still valid
-		if (CurrentIndex >= PlayerInventory->Fish.Num())
-		{
-			CurrentIndex = FMath::Max(0, PlayerInventory->Fish.Num() - 1);
-		}
-
-		PrintCurrentItem();
 	}
 	else
 	{
-		if (Rods.Num() == 0)
-		{
-			return;
-		}
-
-		ARod* CurrentRod = Rods[CurrentIndex];
-
-		if (!CurrentRod)
-		{
-			return;
-		}
-
-		int32 RodPrice = CurrentRod->price;
-
-		if (dollars < RodPrice)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				2,
-				3.0f,
-				FColor::Red,
-				TEXT("NOT ENOUGH MONEY")
-			);
-
-			return;
-		}
-
-		ARod* NewRod = GetWorld()->SpawnActor<ARod>(
-			ARod::StaticClass(),
-			FVector::ZeroVector,
-			FRotator::ZeroRotator
-		);
-
-		if (!NewRod)
-		{
-			return;
-		}
-
-		NewRod->name = CurrentRod->name;
-		NewRod->price = CurrentRod->price;
-		NewRod->luck = CurrentRod->luck;
-		NewRod->RodTier = CurrentRod->RodTier; // Kopiera spönivån från butiksspöet
-
-		dollars -= RodPrice;
-		PlayerInventory->Rods.Add(NewRod);   // Spara det köpta spöet i inventoryt
-		PlayerInventory->EquipRod(NewRod);   // Utrusta det köpta spöet direkt
-
-		GEngine->AddOnScreenDebugMessage(
-			2,
-			3.0f,
-			FColor::Green,
-			FString::Printf(
-				TEXT("BOUGHT %s FOR %d DOLLARS"),
-				*CurrentRod->name.ToString(),
-				RodPrice
-			)
-		);
-		GEngine->AddOnScreenDebugMessage(
-			3,
-			5.0f,
-			FColor::Yellow,
-			FString::Printf(
-				TEXT("Money: %d"),
-				dollars
-			)
-		);
-
-		PrintCurrentItem();
+		Text = TEXT("All rods owned");
 	}
-	
 
+	ShopWidget->SetRodText(Text);
 }
 
+void AShop::ShowMoney() const
+{
+	ShowMessage(3, 5.0f, FColor::Yellow, FString::Printf(TEXT("Money: %d"), dollars));
+}
+
+void AShop::ShowMessage(int32 Key, float Time, const FColor& Color, const FString& Text) const
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(Key, Time, Color, Text);
+	}
+}

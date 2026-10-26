@@ -1,26 +1,17 @@
-
-
 #pragma once
 
-#include "ShopWidget.h"
 #include "CoreMinimal.h"
+#include "FishManager.h"
 #include "GameFramework/Actor.h"
+#include "ShopWidget.h"
 #include "Rod.h"
 #include "Inventory.h"
 #include "Components/BoxComponent.h"
-#include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 #include "Shop.generated.h"
 
-
 class AInventory;
-
-UENUM()
-enum class EShopSection
-{
-	Inventory,
-	Shop
-};
 
 UCLASS()
 class PROD_GRUPP8_API AShop : public AActor
@@ -28,16 +19,15 @@ class PROD_GRUPP8_API AShop : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	AShop();
-
-	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool shopEnabled = false;
 
-	bool previousShopEnabled = false;
 	bool bCanOpenShop = false;
+	
+	UPROPERTY()
+	TObjectPtr<AFishManager> FishManager;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	AInventory* PlayerInventory;
@@ -48,9 +38,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UBoxComponent* TriggerBox;
 
+	// Rods for sale, in the order they are unlocked. The shop always sells Rods[NextRodIndex].
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<ARod*> Rods;
-	
+
+	// Index into Rods of the next rod the player can buy.
+	// Set to 1 in the editor if Rods[0] is a starter rod the player already owns.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")
+	int32 NextRodIndex = 0;
+
 	// Ljudkomponenten som sköter uppspelningen
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
 	TObjectPtr<UAudioComponent> ShopAudioComponent;
@@ -67,28 +63,44 @@ public:
 
 	int32 dollars = 0;
 
+	void OpenShop();
 	void CloseShop();
 	void ToggleShop();
+
+	// Shop actions
+	void SellAllFish();
+	void BuyNextRod();
+
+	// Debug: +100 dollars
 	void addDollars();
+
+	// Legacy entry points still called by AProd_grupp8Character (DoShopTransaction / DoSwitchShopView).
+	// They intentionally do nothing now; remove them once the character no longer calls them.
 	void Transaction();
 	void ToggleSection();
-	void OpenShop();
-
+	
+	
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Audio Functions")
+	void OnFishSold(const int FishSold, const int TotalPrice);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Audio Functions")
+	void OnRodBought(const int RodIndex, const int BoughtFor);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Audio Functions")
+	void OnRodCantBuy(const int RodIndex, const int RodPrice, const int MoneyOnPlayer);
+	
+	UFUNCTION(BlueprintImplementableEvent,  Category = "Audio Functions")
+	void OnEnterShop();
+	
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-
-
 private:
-	// Called every frame
+	UPROPERTY()
+	TObjectPtr<UShopWidget> ShopWidget;
 
-	EShopSection CurrentSection = EShopSection::Inventory;
-
-	int32 CurrentIndex = 0;
-	void MoveLeft();
-	void MoveRight();
-	void MoveUp();
-	void MoveDown();
-	void PrintCurrentItem();
+	void RefreshWidget();
+	void ShowMoney() const;
+	void ShowMessage(int32 Key, float Time, const FColor& Color, const FString& Text) const;
 };
