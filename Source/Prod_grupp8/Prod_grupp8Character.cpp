@@ -164,8 +164,21 @@ void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	// pass the axis values to the move input
-	DoMove(0, MovementVector.Y);
-
+	if (ShopInRange && ShopInRange -> shopEnabled)
+	{
+		if (MovementVector.Y > 0.5)
+		{
+			ShopInRange -> BuyNextRod();
+		}
+		else if (MovementVector.Y < -0.5)
+		{
+			ShopInRange -> SellAllFish();
+		}
+	}
+	else
+	{
+		DoMove(0, MovementVector.Y);
+	}
 }
 void AProd_grupp8Character::LookInput(const FInputActionValue& Value)
 {
