@@ -429,7 +429,7 @@ void AProd_grupp8Character::Escape()
 		ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
 	}
 	
-	UGameplayStatics::PlaySound2D(this, EscapeSoundCue, 1.0f, 1.0f, 0.0f);
+	UGameplayStatics::PlaySound2D(this, EscapeSoundCue, 2.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("The fish got away"));
 	
 	if (Bobber)
