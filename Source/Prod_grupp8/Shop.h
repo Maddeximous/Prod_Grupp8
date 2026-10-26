@@ -78,7 +78,21 @@ public:
 	// They intentionally do nothing now; remove them once the character no longer calls them.
 	void Transaction();
 	void ToggleSection();
-
+	
+	
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Audio Functions")
+	void OnFishSold(const int FishSold, const int TotalPrice);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Audio Functions")
+	void OnRodBought(const int RodIndex, const int BoughtFor);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Audio Functions")
+	void OnRodCantBuy(const int RodIndex, const int RodPrice, const int MoneyOnPlayer);
+	
+	UFUNCTION(BlueprintImplementableEvent,  Category = "Audio Functions")
+	void OnEnterShop();
+	
 protected:
 	virtual void BeginPlay() override;
 
