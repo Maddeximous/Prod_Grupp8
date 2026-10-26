@@ -41,6 +41,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio Options|Navigation")
 	TSubclassOf<UUserWidget> MainMenuClass;
 
+	/** Use this instead of Main Menu Class if your main menu is its own level (e.g. "MainMenu"). Back then opens that level. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio Options|Navigation")
+	FName MainMenuLevelName;
+
+	/** Name of the widget in the main menu that should get controller focus when returning (e.g. "Button_Play"). Must match the widget name in its Designer. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio Options|Navigation")
+	FName MainMenuFocusWidgetName;
+
 	/** Fired when Back is pressed (button, Escape or gamepad B). Use it if you'd rather handle navigation in Blueprint. */
 	UPROPERTY(BlueprintAssignable, Category = "Audio Options|Navigation")
 	FOnAudioOptionsBack OnBackRequested;
@@ -64,6 +72,12 @@ private:
 	UFUNCTION() void OnBackClicked();
 	void GoBack();
 	bool bBackFocused = false;
+
+	/** The widget (e.g. your Options button) that had focus when this menu opened. Focus returns there on Back. */
+	TWeakPtr<SWidget> PreviousFocusWidget;
+
+	/** Seconds after opening during which we keep re-claiming focus if nothing in this menu has it. */
+	float FocusGraceTime = 0.f;
 
 	UFUNCTION() void OnMasterChanged(float Value);
 	UFUNCTION() void OnSFXChanged(float Value);

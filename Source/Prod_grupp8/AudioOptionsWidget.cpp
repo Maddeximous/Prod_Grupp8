@@ -3,6 +3,11 @@
 #include "Components/Slider.h"
 #include "Components/Button.h"
 #include "InputCoreTypes.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Widget.h"
+#include "GameFramework/PlayerController.h"
+#include "TimerManager.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/GameInstance.h"
@@ -58,6 +63,17 @@ void UAudioOptionsWidget::NativeOnInitialized()
 	Slider_Dialogue->OnValueChanged.AddDynamic(this, &UAudioOptionsWidget::OnDialogueChanged);
 
 	Button_Back->OnClicked.AddDynamic(this, &UAudioOptionsWidget::OnBackClicked);
+
+	// Keep controller navigation inside this menu so it can't jump to the main menu buttons underneath.
+	Slider_Master->SetNavigationRuleBase(EUINavigation::Up, EUINavigationRule::Stop);
+	Button_Back->SetNavigationRuleBase(EUINavigation::Down, EUINavigationRule::Stop);
+	Button_Back->SetNavigationRuleBase(EUINavigation::Left, EUINavigationRule::Stop);
+	Button_Back->SetNavigationRuleBase(EUINavigation::Right, EUINavigationRule::Stop);
+	for (EAudioChannel Channel : AllChannels)
+	{
+		GetSlider(Channel)->SetNavigationRuleBase(EUINavigation::Left, EUINavigationRule::Stop);
+		GetSlider(Channel)->SetNavigationRuleBase(EUINavigation::Right, EUINavigationRule::Stop);
+	}
 }
 
 FReply UAudioOptionsWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
@@ -96,15 +112,73 @@ void UAudioOptionsWidget::GoBack()
 			if (UUserWidget* MainMenu = CreateWidget<UUserWidget>(PC, MainMenuClass))
 			{
 				MainMenu->AddToViewport();
+
+				// Hand input focus to the main menu so the controller works right away.
+				FInputModeUIOnly InputMode;
+				InputMode.SetWidgetToFocus(MainMenu->TakeWidget());
+				InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+				PC->SetInputMode(InputMode);
+
+				// Focus the chosen button one tick later, once the new widget is fully built.
+				TWeakObjectPtr<UUserWidget> WeakMenu(MainMenu);
+				TWeakObjectPtr<APlayerController> WeakPC(PC);
+				const FName FocusName = MainMenuFocusWidgetName;
+				PC->GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([WeakMenu, WeakPC, FocusName]()
+				{
+					if (!WeakMenu.IsValid() || !WeakPC.IsValid())
+					{
+						return;
+					}
+					UWidget* Target = nullptr;
+					if (!FocusName.IsNone() && WeakMenu->WidgetTree)
+					{
+						Target = WeakMenu->WidgetTree->FindWidget(FocusName);
+					}
+					if (Target)
+					{
+						Target->SetUserFocus(WeakPC.Get());
+					}
+					else
+					{
+						WeakMenu->SetUserFocus(WeakPC.Get());
+					}
+				}));
 			}
 		}
 		RemoveFromParent();
+	}
+	else if (!MainMenuLevelName.IsNone())
+	{
+		UGameplayStatics::OpenLevel(this, MainMenuLevelName);
+	}
+	else
+	{
+		// Default case: the main menu is still on screen underneath this widget.
+		// Just close the options menu and hand controller focus back to the button that opened it.
+		const TWeakPtr<SWidget> FocusTarget = PreviousFocusWidget;
+		APlayerController* PC = GetOwningPlayer();
+		RemoveFromParent();
+
+		if (PC)
+		{
+			PC->GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([FocusTarget]()
+			{
+				if (const TSharedPtr<SWidget> Target = FocusTarget.Pin())
+				{
+					FSlateApplication::Get().SetUserFocus(0, Target, EFocusCause::SetDirectly);
+				}
+			}));
+		}
 	}
 }
 
 void UAudioOptionsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	// Remember what had focus (your main menu's Options button) before we steal it, so Back can give it back.
+	PreviousFocusWidget = FSlateApplication::Get().GetUserFocusedWidget(0);
+	FocusGraceTime = 1.0f;
 
 	// Show the stored values without triggering cues.
 	if (UAudioSettingsSubsystem* Settings = GetSettings())
@@ -137,6 +211,28 @@ void UAudioOptionsWidget::NativeDestruct()
 void UAudioOptionsWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	// Right after opening, the code that created this widget may move focus onto the widget itself
+	// (e.g. Set Input Mode UI Only with this widget as target), which leaves the sliders without focus.
+	// For a short time, put focus back on the first slider whenever nothing in this menu has it.
+	if (FocusGraceTime > 0.f)
+	{
+		FocusGraceTime -= InDeltaTime;
+
+		bool bAnyFocus = Button_Back && Button_Back->HasAnyUserFocus();
+		for (EAudioChannel Channel : AllChannels)
+		{
+			const USlider* Slider = GetSlider(Channel);
+			if (Slider && Slider->HasAnyUserFocus())
+			{
+				bAnyFocus = true;
+			}
+		}
+		if (!bAnyFocus)
+		{
+			Slider_Master->SetKeyboardFocus();
+		}
+	}
 
 	// Announce the Back button when it gets focus (optional, only if BackCue is assigned).
 	if (Button_Back && Button_Back->HasAnyUserFocus())
