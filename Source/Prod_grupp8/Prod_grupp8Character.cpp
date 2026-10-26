@@ -310,16 +310,15 @@ void AProd_grupp8Character::DoCastLine()
 	if (GetController())
 	{
 		// Kolla om shoppen är öppen via ShopInRange
-		bool bIsShopOpen = ShopInRange && ShopInRange->shopEnabled;
-		if (!bIsFishing && FishInRange && !bIsShopOpen)
+		if (ShopInRange)
+		{
+			ShopInRange -> ToggleShop();
+		}
+		else if (!bIsFishing && FishInRange)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Fish"));
 			
 			StartFishing();
-		}
-		else if (!bIsFishing && ShopInRange)
-		{
-			ShopInRange -> ToggleShop();
 		}
 	}
 }

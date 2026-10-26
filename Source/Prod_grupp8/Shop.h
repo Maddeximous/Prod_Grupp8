@@ -72,6 +72,7 @@ public:
 	void addDollars();
 	void Transaction();
 	void ToggleSection();
+	void OpenShop();
 
 protected:
 	// Called when the game starts or when spawned
@@ -90,5 +91,4 @@ private:
 	void MoveUp();
 	void MoveDown();
 	void PrintCurrentItem();
-	void OpenShop();
 };

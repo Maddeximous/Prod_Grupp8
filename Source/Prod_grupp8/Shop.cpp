@@ -139,13 +139,6 @@ void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Other
 			Player->ShopInRange = this;
 		}
 		bCanOpenShop = true;
-		UE_LOG(LogTemp, Warning, TEXT("Spelare gick in i shoppen!"));
-
-		// Känn av att shoppen är stängd när man går in, och öppna den OMEDELBART
-		if (!shopEnabled)
-		{
-			OpenShop(); // Detta sätter igång allt automatiskt!
-		}
 	}
 }
 
@@ -541,8 +534,7 @@ void AShop::Transaction()
 		// Make sure the index is still valid
 		if (CurrentIndex >= PlayerInventory->Fish.Num())
 		{
-			CurrentIndex =
-				FMath::Max(0, PlayerInventory->Fish.Num() - 1);
+			CurrentIndex = FMath::Max(0, PlayerInventory->Fish.Num() - 1);
 		}
 
 		PrintCurrentItem();
