@@ -185,6 +185,54 @@ AFish* AFishManager::SpawnFishOfType(
 	return NewFish;
 }
 
+void AFishManager::SpawnGhostTreasureNow()
+{
+	if (!IsValid(Inventory) || !IsValid(Inventory->EquippedRod))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Kan inte skapa spökskatt: saknar Inventory eller utrustat spö."));
+		return;
+	}
+
+	if (Inventory->EquippedRod->RodTier != ERodTier::Super)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Spökskatt kräver Superspö."));
+		return;
+	}
+
+	if (!SpawnAreaBox || !FishToSpawn || !FishDataBase.Contains(EFishType::Spokskatt))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Kan inte skapa spökskatt: kontrollera SpawnAreaBox, FishToSpawn och FishDataBase."));
+		return;
+	}
+
+	for (AFish* ExistingFish : SpawnedFish)
+	{
+		if (IsValid(ExistingFish))
+		{
+			ExistingFish->Destroy();
+		}
+	}
+
+	SpawnedFish.Empty();
+
+	const FVector BoxOrigin = SpawnAreaBox->GetComponentLocation();
+	const FVector BoxExtent = SpawnAreaBox->GetScaledBoxExtent();
+
+	FVector SpawnLocation = FMath::RandPointInBox(
+		FBox(BoxOrigin - BoxExtent, BoxOrigin + BoxExtent));
+
+	SpawnLocation.Z = BoxOrigin.Z;
+
+	AFish* GhostTreasure = SpawnFishOfType(
+		EFishType::Spokskatt,
+		SpawnLocation);
+
+	if (GhostTreasure)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("En Spökskatt har spawnats efter köpet av Superspöet."));
+	}
+}
+
 AFish* AFishManager::GetClosestFishToPlayer()
 {
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);

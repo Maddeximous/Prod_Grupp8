@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Fishing")
 	AFish* GetClosestFishToPlayer();
 	
+	UFUNCTION(BlueprintCallable, Category = "Fishing")
+	void SpawnGhostTreasureNow();
+	
 	void SpawnInitialFish();
 	
 	AFish* SpawnRandomFish();
