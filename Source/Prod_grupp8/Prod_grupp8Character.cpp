@@ -371,6 +371,7 @@ void AProd_grupp8Character::OnHook()
 	LineDurability = 100.0;
 	caughtProgress = 0.0f;
 	bIsFishOnHook = true;
+	bFishIsFighting = false;
 	
 	UGameplayStatics::PlaySound2D(this, OnHookSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("On Hook: %f"), ProgressToCatch);
@@ -428,25 +429,18 @@ void AProd_grupp8Character::Escape()
 		ReelInSoundCueObject->FadeOut(0.2f, 0.0f);
 	}
 	
-	//UGameplayStatics::PlaySound2D(this, CaughtSoundCue, 1.0f, 1.0f, 0.0f);
+	UGameplayStatics::PlaySound2D(this, EscapeSoundCue, 1.0f, 1.0f, 0.0f);
 	UE_LOG(LogTemp, Warning, TEXT("The fish got away"));
-	//UOnboardingSubsystem::ReportOnboardingEvent(this, TEXT("FishCaught"));
+	
 	if (Bobber)
 	{
 		Bobber -> Destroy();
 	}
-	//FishManager -> OnFishCaught(FishInRange);
-	
-	//FishCaught++;
-	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
-	//Bobber -> Destroy();
 	if (UGameTelemetry* Telemetry = GetGameInstance()->GetSubsystem<UGameTelemetry>())
 	{
 		Telemetry->EndReeling(true);
 	}
 	
-	//Blueprintcallable event for the onboarding
-	//OnFishCaught();
 }
 
 AActor* AProd_grupp8Character::SpawnBobber(FVector SpawnLocation){
