@@ -164,8 +164,21 @@ void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	// pass the axis values to the move input
-	DoMove(0, MovementVector.Y);
-
+	if (ShopInRange && ShopInRange -> shopEnabled)
+	{
+		if (MovementVector.Y > 0.5)
+		{
+			ShopInRange -> BuyNextRod();
+		}
+		else if (MovementVector.Y < -0.5)
+		{
+			ShopInRange -> SellAllFish();
+		}
+	}
+	else
+	{
+		DoMove(0, MovementVector.Y);
+	}
 }
 void AProd_grupp8Character::LookInput(const FInputActionValue& Value)
 {
@@ -338,24 +351,16 @@ void AProd_grupp8Character::StartFishing()
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
 	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
 	FishInRange -> FishingAudioComp -> FadeOut(0.5f, 0.0f);
-	
-	if (ReelInSoundCue)
+	bReelSoundActive = false;
+	ReelSoundTimer = 0.0f;
+
+	if (ReelInSoundCue && !IsValid(ReelInSoundCueObject))
 	{
-		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
-		
-		if (ReelInSoundCueObject)
-		{
-			ReelInSoundCueObject->Stop();
-		}
+		ReelInSoundCueObject = UGameplayStatics::CreateSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 	}
-	
-	if (TensionSoundCue)
+	if (TensionSoundCue && !IsValid(TensionSoundCueObject))
 	{
-		TensionSoundCueObject = UGameplayStatics::SpawnSound2D(this, TensionSoundCue, 1.0f, 1.0f, 0.0f);
-		if (TensionSoundCueObject)
-		{
-			TensionSoundCueObject->Stop();
-		}
+		TensionSoundCueObject = UGameplayStatics::CreateSound2D(this, TensionSoundCue, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 	}
 }
 
@@ -561,10 +566,7 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("The fish is loose"));
 		Escape();
-		if (IsValid(TensionSoundCueObject))
-		{
-			TensionSoundCueObject->Stop();
-		}
+		if (TensionSoundCueObject) {TensionSoundCueObject -> Stop();}
 	}
 	
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(ReelHapticEffect);
