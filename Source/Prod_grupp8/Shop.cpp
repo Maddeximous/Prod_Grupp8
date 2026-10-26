@@ -98,6 +98,7 @@ void AShop::OpenShop()
 	}
 
 	ShowMessage(1, 10.0f, FColor::Blue, TEXT("Shop Opened | Down: sell all fish | Up: buy next rod"));
+	OnEnterShop();
 	ShowMoney();
 	RefreshWidget();
 }
@@ -169,6 +170,7 @@ void AShop::SellAllFish()
 	dollars += TotalPrice;
 
 	ShowMessage(2, 3.0f, FColor::Green, FString::Printf(TEXT("SOLD %d FISH FOR %d DOLLARS"), FishSold, TotalPrice));
+	OnFishSold(FishSold, TotalPrice);
 	ShowMoney();
 }
 
@@ -223,6 +225,7 @@ void AShop::BuyNextRod()
 	++NextRodIndex;
 
 	ShowMessage(2, 3.0f, FColor::Green, FString::Printf(TEXT("BOUGHT %s FOR %d DOLLARS"), *RodForSale->name.ToString(), RodPrice));
+	//OnRodBought(RodForSale->name, RodPrice);
 	ShowMoney();
 	RefreshWidget();
 }
