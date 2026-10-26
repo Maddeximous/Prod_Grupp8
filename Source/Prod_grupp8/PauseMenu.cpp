@@ -4,6 +4,7 @@
 #include "PauseMenu.h"
 #include "Inventory.h"
 #include "Fish.h"
+#include "Blueprint/UserWidget.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
@@ -104,6 +105,68 @@ void APauseMenu::Tick(float DeltaTime)
 	{
 		UpdateDebugText();
 	}
+}
+
+void APauseMenu::OpenSettings()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (!PC || !SettingsWidgetClass)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Settings widget class or PlayerController is missing"));
+		return;
+	}
+
+	// Don't create the widget multiple times
+	if (SettingsWidget && SettingsWidget->IsInViewport())
+	{
+		return;
+	}
+
+	SettingsWidget = CreateWidget<UUserWidget>(
+		PC,
+		SettingsWidgetClass
+	);
+
+	if (!SettingsWidget)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to create settings widget"));
+		return;
+	}
+
+	SettingsWidget->AddToViewport();
+
+	// Allow the player to interact with the widget
+	PC->SetInputMode(FInputModeGameAndUI());
+	PC->bShowMouseCursor = true;
+
+	// Give the widget keyboard/gamepad focus
+	SettingsWidget->SetIsFocusable(true);
+	PC->SetInputMode(FInputModeGameAndUI().SetWidgetToFocus(
+		SettingsWidget->TakeWidget()
+	));
+}
+
+void APauseMenu::CloseSettings()
+{
+	if (SettingsWidget)
+	{
+		SettingsWidget->RemoveFromParent();
+		SettingsWidget = nullptr;
+	}
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (PC)
+	{
+		// Return input to the pause menu
+		PC->SetInputMode(FInputModeGameOnly());
+		PC->bShowMouseCursor = false;
+	}
+
+	// Keep the game paused!
+	bPaused = true;
 }
 
 void APauseMenu::MoveUp()
@@ -257,10 +320,12 @@ void APauseMenu::ExecuteAction(EPauseMenuAction Action)
 		break;
 
 	case EPauseMenuAction::OpenSettings:
+		OpenSettings();
 		break;
 
 	case EPauseMenuAction::None:
 		break;
+		
 	}
 }
 
