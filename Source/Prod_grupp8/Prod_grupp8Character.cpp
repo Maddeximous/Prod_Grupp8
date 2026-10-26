@@ -389,6 +389,8 @@ void AProd_grupp8Character::Caught()
 	bIsFishing = false;
 	bIsFishOnHook = false;
 	
+	const bool bCaughtGhostTreasure = IsValid(FishInRange) && FishInRange->FishSpecies == EFishType::Spokskatt;
+	
 	if (ReelInSoundCueObject && bReelSoundActive)
 	{
 		bReelSoundActive = false;
@@ -414,6 +416,10 @@ void AProd_grupp8Character::Caught()
 	
 	//Blueprintcallable event for the onboarding
 	OnFishCaught();
+	if (bCaughtGhostTreasure)
+	{
+		OnGhostTreasureCaught();
+	}
 }
 
 void AProd_grupp8Character::Escape()
@@ -522,7 +528,10 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("The fish is loose"));
 		Escape();
-		TensionSoundCueObject -> Stop();
+		if (IsValid(TensionSoundCueObject))
+		{
+			TensionSoundCueObject->Stop();
+		}
 	}
 	
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(ReelHapticEffect);

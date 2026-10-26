@@ -203,6 +203,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
 	void OnFishSphereEntered();
 	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Fishing")
+	void OnGhostTreasureCaught();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	int FishCaught = 0;
 	
