@@ -519,6 +519,7 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 		float NextFishFight = FMath::RandRange(5.0, 9.0);
 		GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::StartFishFighting, NextFishFight, false);
 		if (TensionSoundCueObject) {TensionSoundCueObject -> Stop();}
+		LineDurability += 20.0f;
 	}
 	
 	LineDurability -= FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * ReelValue * 13.0f;
