@@ -23,6 +23,8 @@ enum class EFishType : uint8
 	Lake UMETA(DisplayName = "Lake"),
 	Braxen UMETA(DisplayName = "Braxen"),
 	Sutare UMETA(DisplayName = "Sutare"),
+	Spokskatt UMETA(DisplayName = "Spökskatt"),
+	
 	
 };
 
@@ -31,7 +33,8 @@ enum class ERodTier : uint8
 {
 	Starter  UMETA(DisplayName = "Startspö"),
 	Standard UMETA(DisplayName = "Standardspö"),
-	Advanced UMETA(DisplayName = "Avancerat spö")
+	Advanced UMETA(DisplayName = "Avanceratspö"),
+	Super UMETA(DisplayName = "Superspö")
 };
 
 USTRUCT(BlueprintType)
