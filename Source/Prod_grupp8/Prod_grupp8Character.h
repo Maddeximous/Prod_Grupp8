@@ -282,6 +282,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
 	void OnFishCaught();
 	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Fishing")
+	void OnFishCaughtWithInfo(EFishType Species, float Weight, float TotalPrice);
+	
 	void StartFishing();
 	
 	void OnHook();
