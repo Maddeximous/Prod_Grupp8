@@ -338,7 +338,8 @@ void AProd_grupp8Character::DoCastLine()
 
 void AProd_grupp8Character::DoOpenPauseMenu()
 {
-	PauseMenu -> TogglePauseMenu();
+	//PauseMenu -> TogglePauseMenu();
+	UE_LOG(LogTemp, Warning, TEXT("Ingen meny. Shit är knas"));
 }
 
 void AProd_grupp8Character::StartFishing()
