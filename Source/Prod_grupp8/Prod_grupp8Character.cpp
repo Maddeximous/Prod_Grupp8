@@ -338,24 +338,16 @@ void AProd_grupp8Character::StartFishing()
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::OnHook, fTimeToFish, false);
 	UGameplayStatics::PlaySound2D(this, ThrowSoundCue, 1.0f, 1.0f, 0.0f);
 	FishInRange -> FishingAudioComp -> FadeOut(0.5f, 0.0f);
-	
-	if (ReelInSoundCue)
+	bReelSoundActive = false;
+	ReelSoundTimer = 0.0f;
+
+	if (ReelInSoundCue && !IsValid(ReelInSoundCueObject))
 	{
-		ReelInSoundCueObject = UGameplayStatics::SpawnSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f);
-		
-		if (ReelInSoundCueObject)
-		{
-			ReelInSoundCueObject->Stop();
-		}
+		ReelInSoundCueObject = UGameplayStatics::CreateSound2D(this, ReelInSoundCue, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 	}
-	
-	if (TensionSoundCue)
+	if (TensionSoundCue && !IsValid(TensionSoundCueObject))
 	{
-		TensionSoundCueObject = UGameplayStatics::SpawnSound2D(this, TensionSoundCue, 1.0f, 1.0f, 0.0f);
-		if (TensionSoundCueObject)
-		{
-			TensionSoundCueObject->Stop();
-		}
+		TensionSoundCueObject = UGameplayStatics::CreateSound2D(this, TensionSoundCue, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 	}
 }
 
@@ -523,7 +515,7 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("The fish is loose"));
 		Escape();
-		TensionSoundCueObject -> Stop();
+		if (TensionSoundCueObject) {TensionSoundCueObject -> Stop();}
 	}
 	
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->ClientPlayForceFeedback(ReelHapticEffect);
