@@ -395,6 +395,8 @@ void AProd_grupp8Character::Caught()
 	bIsFishing = false;
 	bIsFishOnHook = false;
 	
+	const bool bCaughtGhostTreasure = IsValid(FishInRange) && FishInRange->FishSpecies == EFishType::Spokskatt;
+	
 	if (ReelInSoundCueObject && bReelSoundActive)
 	{
 		bReelSoundActive = false;
@@ -408,7 +410,33 @@ void AProd_grupp8Character::Caught()
 	{
 		Bobber -> Destroy();
 	}
-	FishManager -> OnFishCaught(FishInRange);
+	
+	AFish* CaughtFish = FishInRange;
+	const bool bHasCaughtFish = IsValid(CaughtFish);
+
+	EFishType CaughtSpecies = EFishType::None;
+	float CaughtWeight = 0.0f;
+	float CaughtTotalPrice = 0.0f;
+
+	if (bHasCaughtFish)
+	{
+		CaughtSpecies = CaughtFish->FishSpecies;
+		CaughtWeight = CaughtFish->Weight;
+
+		if (IsValid(FishManager))
+		{
+			if (const FFishData* FishInfo =
+				FishManager->FishDataBase.Find(CaughtSpecies))
+			{
+				CaughtTotalPrice = CaughtWeight * FishInfo->PricePerKilo;
+			}
+		}
+	}
+	
+	if (IsValid(FishManager) && bHasCaughtFish)
+	{
+		FishManager->OnFishCaught(CaughtFish);
+	}
 	
 	FishCaught++;
 	//UE_LOG(LogTemp, Warning, TEXT("You caught the fish %p"), Bobber);
@@ -419,7 +447,17 @@ void AProd_grupp8Character::Caught()
 	}
 	
 	//Blueprintcallable event for the onboarding
-	OnFishCaught();
+	if (bHasCaughtFish)
+	{
+		OnFishCaughtWithInfo(
+			CaughtSpecies,
+			CaughtWeight,
+			CaughtTotalPrice);
+	}
+	if (bCaughtGhostTreasure)
+	{
+		OnGhostTreasureCaught();
+	}
 }
 
 void AProd_grupp8Character::Escape()
