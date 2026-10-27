@@ -68,14 +68,6 @@ protected:
 	
 	/** Sonar Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
-	class UInputAction* SwayRightAction;
-	
-	/** Sonar Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	class UInputAction* SwayLeftAction;
-	
-	/** Sonar Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* OpenPauseMenuAction;
 	
 	/** Shop Input Action */
@@ -274,13 +266,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 	
-	/** Handles Sway input for LB (right) */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSwayLeft();
-	
-	/** Handles Sway input for RB (left) */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSwayRight();
 	
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")

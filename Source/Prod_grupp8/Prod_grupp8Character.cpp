@@ -78,12 +78,6 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		// Sonar
 		EnhancedInputComponent->BindAction(SonarAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSonar);
 		
-		// Sway right
-		EnhancedInputComponent->BindAction(SwayRightAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayRight);
-		
-		// Sway left
-		EnhancedInputComponent->BindAction(SwayLeftAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayLeft);
-		
 		//Pause
 		EnhancedInputComponent->BindAction(OpenPauseMenuAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoOpenPauseMenu);
 		
