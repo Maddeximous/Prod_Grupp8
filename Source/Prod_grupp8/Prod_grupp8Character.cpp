@@ -250,29 +250,6 @@ void AProd_grupp8Character::DoSonar()
 		}
 	}
 }
-
-void AProd_grupp8Character::DoSwayRight()
-{
-	if (GetController())
-	{
-		if (bIsFishOnHook)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Right"));
-		}
-	}
-}
-
-void AProd_grupp8Character::DoSwayLeft()
-{
-	if (GetController())
-	{
-		if (bIsFishOnHook)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Left"));
-		}
-	}
-}
-
 void AProd_grupp8Character::ReelLineInput(const FInputActionValue& Value)
 {
 	// get the Vector2D move axis
@@ -552,7 +529,7 @@ float AProd_grupp8Character::Reeling(float DeltaTime)
 			ReelInSoundCueObject->FadeIn(0.4f, 0.6f);
 		}
 		
-		return DeltaTime * ReelStickDegree * 10.0f;
+		return DeltaTime * ReelStickDegree * 20.0f;
 	}
 	if (ReelInSoundCueObject && bReelSoundActive)
 	{
