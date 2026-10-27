@@ -8,6 +8,7 @@
 class AInventory;
 class AFish;
 class UUserWidget;
+class USoundBase;
 
 UCLASS()
 class PROD_GRUPP8_API APauseMenu : public AActor
@@ -19,6 +20,20 @@ public:
 	APauseMenu();
 
 	virtual void Tick(float DeltaTime) override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Narration")
+	USoundBase* ResumeSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Narration")
+	USoundBase* OptionsSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Narration")
+	USoundBase* InventorySound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Narration")
+	USoundBase* QuitSound;
+
+	void PlayNavigationSound();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pause Menu")
 	bool bPaused = false;
@@ -38,6 +53,9 @@ public:
 	void OpenSettings();
 	
 private:
+	
+	UPROPERTY()
+	UAudioComponent* CurrentNarrationComponent = nullptr;
 	
 	int32 CurrentMenuIndex = 0;
 
