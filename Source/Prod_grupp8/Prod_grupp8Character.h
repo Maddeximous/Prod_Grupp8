@@ -204,6 +204,17 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
 	void OnFishSphereEntered();
 	
+	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
+	void FishFight();
+	
+	//Blueprint event for going to shop for the first time 
+	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
+	void OnShopEnetered();
+	
+	//Blueprint event for going to shop for the first time 
+	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
+	void OnShopOpened();
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Fishing")
 	void OnGhostTreasureCaught();
 	
@@ -284,9 +295,6 @@ protected:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
 	void OnFishCaught();
-	
-	UFUNCTION(BlueprintImplementableEvent, Category = "Fishing")
-	void OnFishCaughtWithInfo(EFishType Species, float Weight, float TotalPrice);
 	
 	void StartFishing();
 	

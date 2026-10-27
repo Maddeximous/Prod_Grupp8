@@ -474,13 +474,8 @@ void AProd_grupp8Character::Caught()
 	}
 	
 	//Blueprintcallable event for the onboarding
-	if (bHasCaughtFish)
-	{
-		OnFishCaughtWithInfo(
-			CaughtSpecies,
-			CaughtWeight,
-			CaughtTotalPrice);
-	}
+	OnFishCaught();
+	
 	if (bCaughtGhostTreasure)
 	{
 		OnGhostTreasureCaught();
@@ -576,6 +571,7 @@ float AProd_grupp8Character::Reeling(float DeltaTime)
 
 void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 {
+	FishFight();
 	FishFightTimer -= DeltaTime;
 	if (FishFightTimer < 0.0)
 	{
