@@ -14,6 +14,7 @@
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "Sound/SoundBase.h"
 #include "GameTelemetry.h"
 #include "Shop.h"
 #include "OnboardingSubsystem.h"
@@ -436,6 +437,17 @@ void AProd_grupp8Character::Caught()
 				{
 					UGameplayStatics::PlaySound2D(this, FishInfo->SpeciesNameAudio, 1.0f, 1.0f, 0.0f);
 					UE_LOG(LogTemp, Warning, TEXT("Spelar upp namnljud för fisk!"));
+					if (FishInfo->SpeciesNameAudio)
+					{
+						// 1. Spela upp fiskartens namn
+						UGameplayStatics::PlaySound2D(this, FishInfo->SpeciesNameAudio, 1.0f, 1.0f, 0.0f);
+						UE_LOG(LogTemp, Warning, TEXT("Spelar upp namnljud för fisk!"));
+						// Anropa din metod direkt här:
+						if (IsValid(NumberSpeaker))
+						{
+							NumberSpeaker->SpeakNumber(CaughtWeight, 1, true);
+						}
+					}
 				}
 				else
 				{

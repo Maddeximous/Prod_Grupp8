@@ -9,6 +9,7 @@
 #include "PauseMenu.h"
 #include "Inventory.h"
 #include "Shop.h"
+#include "NumberSpeaker.h"
 #include "Prod_grupp8Character.generated.h"
 
 class UInputComponent;
@@ -218,7 +219,9 @@ public:
 	UPROPERTY()
 	TObjectPtr<AShop> ShopInRange;
 	
-	
+	UPROPERTY()
+	TObjectPtr<ANumberSpeaker> NumberSpeaker;
+
 
 protected:
 	virtual void BeginPlay() override;
