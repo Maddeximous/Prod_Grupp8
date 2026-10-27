@@ -33,7 +33,7 @@ AFish::AFish()
 	
 	SeagullAudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("SeagullAudioComp"));
 	SeagullAudioComp->SetupAttachment(RootComponent);
-	SeagullAudioComp->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
+	SeagullAudioComp->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
 	SeagullAudioComp->bAutoActivate = false;
 	
 	FishingSphere->SetCollisionProfileName("Trigger");

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Sound/SoundBase.h"
 #include "FishTypes.generated.h"
 
 /**
@@ -57,6 +58,8 @@ struct FFishData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FishData")
 	ERodTier RequiredRodTier = ERodTier::Starter;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FishData|Audio")
+	USoundBase* SpeciesNameAudio;
 };
 
 class PROD_GRUPP8_API FishTypes

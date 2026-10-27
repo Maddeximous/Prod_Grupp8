@@ -54,11 +54,13 @@ void AShop::BeginPlay()
 
 void AShop::OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	
 	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (OtherActor && OtherActor == Pawn)
 	{
 		if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
 		{
+			Player->OnShopEnetered();
 			Player->ShopInRange = this;
 		}
 		bCanOpenShop = true;
@@ -94,6 +96,7 @@ void AShop::OpenShop()
 	APawn* Pawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (AProd_grupp8Character* Player = Cast<AProd_grupp8Character>(Pawn))
 	{
+		Player->OnShopOpened();
 		Player->GetCharacterMovement()->DisableMovement();
 	}
 
