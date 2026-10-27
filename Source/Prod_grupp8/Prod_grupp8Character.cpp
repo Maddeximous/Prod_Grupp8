@@ -422,17 +422,32 @@ void AProd_grupp8Character::Caught()
 	{
 		CaughtSpecies = CaughtFish->FishSpecies;
 		CaughtWeight = CaughtFish->Weight;
-
+		
+		FString SpeciesNameStr = UEnum::GetValueAsString(CaughtSpecies);
+		UE_LOG(LogTemp, Warning, TEXT("Du fångade fiskart: %s"), *SpeciesNameStr);
+		
 		if (IsValid(FishManager))
 		{
-			if (const FFishData* FishInfo =
-				FishManager->FishDataBase.Find(CaughtSpecies))
+			if (const FFishData* FishInfo = FishManager->FishDataBase.Find(CaughtSpecies))
 			{
 				CaughtTotalPrice = CaughtWeight * FishInfo->PricePerKilo;
+
+				if (FishInfo->SpeciesNameAudio)
+				{
+					UGameplayStatics::PlaySound2D(this, FishInfo->SpeciesNameAudio, 1.0f, 1.0f, 0.0f);
+					UE_LOG(LogTemp, Warning, TEXT("Spelar upp namnljud för fisk!"));
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("FishInfo hittades, men SpeciesNameAudio var nullptr (None)!"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Hittade inte fisken i FishDataBase!"));
 			}
 		}
 	}
-	
 	if (IsValid(FishManager) && bHasCaughtFish)
 	{
 		FishManager->OnFishCaught(CaughtFish);
