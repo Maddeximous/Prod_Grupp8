@@ -7,6 +7,7 @@
 
 class AInventory;
 class AFish;
+class UUserWidget;
 
 UCLASS()
 class PROD_GRUPP8_API APauseMenu : public AActor
@@ -27,7 +28,14 @@ public:
 	bool IsPaused() const;
 	
 	void TogglePauseMenu();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pause Menu|Settings")
+	TSubclassOf<UUserWidget> SettingsWidgetClass;
 
+	UPROPERTY()
+	TObjectPtr<UUserWidget> SettingsWidget;
+
+	void OpenSettings();
 	
 private:
 	
@@ -43,6 +51,9 @@ private:
 	void Select();
 	void GoBack();
 	void ExecuteAction(EPauseMenuAction Action);
+	
+	UFUNCTION(BlueprintCallable, Category = "Pause Menu")
+	void CloseSettings();
 	
 	void HandleUp();
 	void HandleDown();
