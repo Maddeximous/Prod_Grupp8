@@ -310,14 +310,29 @@ void APauseMenu::ExecuteAction(EPauseMenuAction Action)
 		break;
 
 	case EPauseMenuAction::Resume:
-		bPaused = false;
-		break;
+        // Unpause the game and restore normal time and input.
+        if (bPaused)
+        {
+            TogglePauseMenu();
+        }
+        break;
 
 	case EPauseMenuAction::Restart:
 		break;
 
 	case EPauseMenuAction::Quit:
-		break;
+        // Restore normal time before loading the main menu.
+        bPaused = false;
+    
+        if (UWorld* World = GetWorld())
+        {
+            UGameplayStatics::SetGlobalTimeDilation(World, 1.0f);
+            UGameplayStatics::OpenLevel(
+                this,
+                FName(TEXT("Level_Main_Menu"))
+            );
+        }
+        break;
 
 	case EPauseMenuAction::OpenSettings:
 		OpenSettings();
