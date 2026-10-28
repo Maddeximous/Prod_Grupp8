@@ -573,8 +573,11 @@ void AProd_grupp8Character::ReadFish(AFish* CaughtFish)
 		{
 			if (const FFishData* FishInfo = FishManager->FishDataBase.Find(CaughtSpecies))
 			{
-				CaughtTotalPrice = CaughtWeight * FishInfo->PricePerKilo;
-				ReadFishType(FishInfo -> SpeciesNameAudio);
+				if (IsValid(FishInfo -> SpeciesNameAudio))
+				{
+					CaughtTotalPrice = CaughtWeight * FishInfo->PricePerKilo;
+					ReadFishType(FishInfo -> SpeciesNameAudio);
+				}
 			}
 		}
 	}
