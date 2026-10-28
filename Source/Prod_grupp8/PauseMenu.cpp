@@ -697,6 +697,7 @@ void APauseMenu::HandlePauseAnnouncementFinished()
 
 void APauseMenu::TogglePauseMenu()
 {
+	
 	bPaused = !bPaused;
 
 	// Reset menu state
@@ -750,18 +751,29 @@ void APauseMenu::TogglePauseMenu()
 	}
 	else
 	{
-		// Stop narration when unpausing.
+		// Stop any current narration
 		if (CurrentNarrationComponent)
 		{
 			CurrentNarrationComponent->Stop();
 			CurrentNarrationComponent = nullptr;
 		}
 
+		// Remove the settings widget if it is open
+		if (IsValid(SettingsWidget))
+		{
+			SettingsWidget->RemoveFromParent();
+			SettingsWidget = nullptr;
+		}
+
+		// Disable pause menu input and restore game input
 		if (PC)
 		{
 			DisableInput(PC);
+			PC->SetInputMode(FInputModeGameOnly());
+			PC->bShowMouseCursor = false;
 		}
 
+		// Resume the game
 		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 
 		if (GEngine)
