@@ -622,37 +622,43 @@ void APauseMenu::OpenFishInventory()
 }
 
 
+
+
 void APauseMenu::GoBack()
 {
-	if (!bPaused) return;
-	if (MenuHistory.IsEmpty())
+	if (!bPaused)
 	{
-		CurrentMenuIndex = 0;
+		return;
 	}
-	SelectedItemIndex = 0;
-	UE_LOG(LogTemp, Warning, TEXT("=== GOBACK ==="));
+
+	// If we're in the fish inventory, leave it first
 	if (bBrowsingFishInventory)
 	{
 		bBrowsingFishInventory = false;
 		FishList.Empty();
-		CurrentFishIndex = 0;
 
-		CurrentMenuIndex = 0;
-		MenuHistory.Pop();
-		UE_LOG(LogTemp, Warning, TEXT("=== EXITING FISH INV ==="));
+		// Reset the selected item
 		SelectedItemIndex = 0;
+
+		// Return to the main pause menu
+		CurrentMenuIndex = 0;
+
+		// Clear the menu history so we don't pop an invalid entry
+		MenuHistory.Empty();
+
+		UE_LOG(LogTemp, Warning, TEXT("Returned to pause menu."));
 		return;
 	}
-	
-	if (MenuHistory.IsEmpty())
-		return;
 
-	CurrentMenuIndex = MenuHistory.Last();
-	MenuHistory.Pop();
-
-	SelectedItemIndex = 0;
-	
+	// Otherwise, return to the previous menu if one exists
+	if (!MenuHistory.IsEmpty())
+	{
+		CurrentMenuIndex = MenuHistory.Pop();
+		SelectedItemIndex = 0;
+	}
 }
+
+
 
 void APauseMenu::UpdateDebugText()
 {
@@ -868,6 +874,7 @@ void APauseMenu::TogglePauseMenu()
 		}
 
 		// Resume the game
+		// Stop any currently playing sound
 		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 
 		if (GEngine)

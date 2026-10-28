@@ -585,6 +585,8 @@ void AProd_grupp8Character::ReadFishType(USoundBase* FishType)
 	FTimerHandle UnusedHandle;
 	const float TimeToNextLine = FishType -> GetDuration() + 0.2;
 	UGameplayStatics::PlaySound2D(this, FishType, 1.0f, 1.0f, 0.0f);
+	if (PauseMenu -> bPaused)
+		return;
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::ReadFishWheight, TimeToNextLine, false);
 }
 
