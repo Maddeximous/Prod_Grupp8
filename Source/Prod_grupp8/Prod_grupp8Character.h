@@ -298,6 +298,8 @@ protected:
 	void Fishing(float DeltaTime, float ReelValue);
 	
 	void FishFighting(float DeltaTime, float ReelValue);
+	
+	void PlayCaughtFishInfo(FFishData* FishInfo, float );
 
 protected:
 
