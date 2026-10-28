@@ -152,6 +152,7 @@ void APauseMenu::OpenSettings()
 
 void APauseMenu::PlayNavigationSound()
 {
+	if (!bPaused) return;
 	if (Menus.IsEmpty() || !Menus.IsValidIndex(CurrentMenuIndex))
 	{
 		return;
@@ -250,6 +251,7 @@ void APauseMenu::CloseSettings()
 
 void APauseMenu::MoveUp()
 {
+	if (!bPaused) return;
 	if (bBrowsingFishInventory)
 	{
 		BrowseFishUp();
@@ -303,6 +305,7 @@ void APauseMenu::BrowseFishDown()
 
 void APauseMenu::MoveDown()
 {
+	if (!bPaused) return;
 	if (bBrowsingFishInventory)
 	{
 		BrowseFishDown();
@@ -330,6 +333,7 @@ void APauseMenu::MoveDown()
 
 void APauseMenu::Select()
 {
+	if (!bPaused) return;
 	if (!Menus.IsValidIndex(CurrentMenuIndex))
 		return;
 
@@ -526,6 +530,7 @@ void APauseMenu::OpenFishInventory()
 
 void APauseMenu::GoBack()
 {
+	if (!bPaused) return;
 	if (MenuHistory.IsEmpty())
 	{
 		CurrentMenuIndex = 0;
