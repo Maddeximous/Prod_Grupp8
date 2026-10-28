@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "PauseMenuStruct.h"
+#include "NumberSpeaker.h"
 #include "GameFramework/Actor.h"
 #include "PauseMenu.generated.h"
 
@@ -9,6 +10,8 @@ class AInventory;
 class AFish;
 class UUserWidget;
 class USoundBase;
+class UAudioComponent;
+class AProd_grupp8Character;
 
 UCLASS()
 class PROD_GRUPP8_API APauseMenu : public AActor
@@ -56,6 +59,24 @@ public:
 	void OpenSettings();
 	
 private:
+	
+	UPROPERTY()
+	UAudioComponent* FishNarrationComponent = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<ANumberSpeaker> NumberSpeaker;
+	
+	void FindNumberSpeaker();
+	
+	FTimerHandle FishNarrationTimer;
+
+	void ReadSelectedFish();
+	void ReadSelectedFishWeight();
+	void ReadSelectedFishPrice();
+	void StopFishNarration();
+
+	float SelectedFishWeight = 0.0f;
+	float SelectedFishPrice = 0.0f;
 	
 	UPROPERTY()
 	UAudioComponent* CurrentNarrationComponent = nullptr;
