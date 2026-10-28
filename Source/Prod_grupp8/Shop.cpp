@@ -238,6 +238,10 @@ void AShop::BuyNextRod()
 	PlayerInventory->EquipRod(NewRod);
 
 	++NextRodIndex;
+	if (!Rods.IsValidIndex(NextRodIndex))
+	{
+		FishManager -> SpawnGhostTreasureNow();
+	}
 	ShowMessage(2, 3.0f, FColor::Green, FString::Printf(TEXT("BOUGHT %s FOR %d DOLLARS"), *RodForSale->name.ToString(), RodPrice));
 	//OnRodBought(RodForSale->name, RodPrice);
 	ShowMoney();
