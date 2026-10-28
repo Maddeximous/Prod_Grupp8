@@ -70,20 +70,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	TObjectPtr<USoundBase> NoMoneySound;
 	
-	// Dialog för "Du"
-	UPROPERTY(EditAnywhere, Category ="Audio")
-	class USoundBase* DialogueYouSound;
-	
 	// Dialog för "Köpte"
 	UPROPERTY(EditAnywhere, Category ="Audio")
 	class USoundBase* BoughtDialogueSound;
+	
+	// Dialog för "För"
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* ForDialogueSound;
 	
 	// Dialog för "Sålde"
 	UPROPERTY(EditAnywhere, Category ="Audio")
 	class USoundBase* SoldDialogueSound;
 	
+	// Dialog för "Fiskar För"
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* FishForDialogueSound;
+	
+	// Dialog för "Kostar"
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* CostsDialogueSound;
+	
+	// Dialog för "Du har"
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* YouHaveDialogueSound;
+	
 	//Ljud som kallar på numberspeaker klassen
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Audio")
 	TObjectPtr<ANumberSpeaker> NumberSpeaker;
 
 	UFUNCTION()
@@ -126,6 +138,10 @@ public:
 	
 	// A helper method that takes a delay and handles the timer internally
 	void PlayNoMoneySoundWithDelay(float DelaySeconds = 1.0f);
+	
+	void BoughtRodSound(const ARod* Rod, int32 Price);
+	void SoldFishSound(int32 FishSold, int32 TotalPrice);
+	void CantBuyRodSound(const ARod* Rod, int32 Price, int32 CurrentMoney);
 	
 protected:
 	virtual void BeginPlay() override;
