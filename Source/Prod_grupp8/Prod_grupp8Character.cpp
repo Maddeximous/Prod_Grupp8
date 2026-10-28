@@ -319,6 +319,7 @@ void AProd_grupp8Character::DoCastLine()
 		if (ShopInRange)
 		{
 			ShopInRange -> ToggleShop();
+			bShopInputLatched = false;
 		}
 		else if (!bIsFishing && FishInRange && !PauseMenu -> bPaused)
 		{

@@ -172,6 +172,7 @@ void AShop::SellAllFish()
 	{
 		// PlayNoMoneySoundWithDelay(1.0f);
 		ShowMessage(2, 3.0f, FColor::Red, TEXT("NO FISH TO SELL"));
+		UGameplayStatics::PlaySound2D(this, NoMoneySound, 1.0f, 1.0f, 0.0f);
 		return;
 	}
 
