@@ -26,6 +26,14 @@ public:
 
     UFUNCTION(BlueprintPure, Category="NumberSpeech")
     bool IsSpeaking() const { return bSpeaking; }
+    
+    /** Speak a number followed by the kilogram clip. */
+    UFUNCTION(BlueprintCallable, Category="NumberSpeech")
+    float SpeakKilo(float Value, int32 DecimalPlaces = 2, bool bTrimTrailingZeros = true);
+
+    /** Speak a number followed by the kronor clip. */
+    UFUNCTION(BlueprintCallable, Category="NumberSpeech")
+    float SpeakSek(float Value, int32 DecimalPlaces = 2, bool bTrimTrailingZeros = true);
 
     /** Fires when the last clip of a number has finished. */
     UPROPERTY(BlueprintAssignable, Category="NumberSpeech")
@@ -50,6 +58,12 @@ public:
     /** Optional. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NumberSpeech|Clips")
     TObjectPtr<USoundBase> Minus;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NumberSpeech|Clips")
+    TObjectPtr<USoundBase> Kilogram;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="NumberSpeech|Clips")
+    TObjectPtr<USoundBase> Kronor;
 
 protected:
     virtual void BeginPlay() override;
@@ -61,6 +75,7 @@ private:
     void PlayNext();
     void BuildQueue(float Value, int32 DecimalPlaces, bool bTrim);
     void AppendWholeNumber(int32 N);
+    float SpeakWithSuffix(float Value, int32 DecimalPlaces, bool bTrim, USoundBase* Suffix);
 
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<UAudioComponent> AudioComp;

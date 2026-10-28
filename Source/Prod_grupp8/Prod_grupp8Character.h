@@ -177,6 +177,12 @@ protected:
 	
 	float LineDurability = 0.0f;
 	
+	EFishType CaughtSpecies = EFishType::None;
+	
+	float CaughtWeight = 0.0f;
+	
+	float CaughtTotalPrice = 0.0f;
+	
 	UPROPERTY()
 	TObjectPtr<AActor> Bobber;
 	
@@ -188,6 +194,9 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<AInventory> Inventory;
+	
+	UPROPERTY()
+	TObjectPtr<ANumberSpeaker> NumberSpeaker;
 
 	
 public:
@@ -221,9 +230,7 @@ public:
 	
 	UPROPERTY()
 	TObjectPtr<AShop> ShopInRange;
-	
-	UPROPERTY()
-	TObjectPtr<ANumberSpeaker> NumberSpeaker;
+
 
 
 protected:
@@ -298,6 +305,10 @@ protected:
 	void Fishing(float DeltaTime, float ReelValue);
 	
 	void FishFighting(float DeltaTime, float ReelValue);
+	
+	void ReadFishType(USoundBase* FishType);
+	void ReadFishWheight();
+	void ReadFishPrice();
 
 protected:
 
@@ -314,5 +325,7 @@ public:
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 	
 	virtual void Tick(float DeltaTime) override;
+	
+	void ReadFish(AFish* CaughtFish);
 
 };
