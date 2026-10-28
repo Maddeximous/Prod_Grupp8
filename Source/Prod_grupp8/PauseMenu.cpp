@@ -607,7 +607,7 @@ void APauseMenu::OpenFishInventory()
     CurrentFishIndex = 0;
 
     // Only enable browsing after the lists have been populated.
-    bBrowsingFishInventory = !FishList.IsEmpty();
+    bBrowsingFishInventory = true;
 
     UE_LOG(LogTemp, Warning,
         TEXT("Fish menu items: %d | FishList items: %d | Browsing: %s"),
@@ -627,35 +627,35 @@ void APauseMenu::OpenFishInventory()
 void APauseMenu::GoBack()
 {
 	if (!bPaused)
-	{
 		return;
-	}
 
-	// If we're in the fish inventory, leave it first
+	UE_LOG(LogTemp, Warning, TEXT("=== GOBACK PRESSED ==="));
+
 	if (bBrowsingFishInventory)
 	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Back pressed in fish inventory"));
+
 		bBrowsingFishInventory = false;
 		FishList.Empty();
-
-		// Reset the selected item
+		CurrentFishIndex = 0;
 		SelectedItemIndex = 0;
 
-		// Return to the main pause menu
+		// Force the main pause menu.
 		CurrentMenuIndex = 0;
 
-		// Clear the menu history so we don't pop an invalid entry
-		MenuHistory.Empty();
+		UE_LOG(LogTemp, Warning,
+			TEXT("Returned to main pause menu"));
 
-		UE_LOG(LogTemp, Warning, TEXT("Returned to pause menu."));
 		return;
 	}
 
-	// Otherwise, return to the previous menu if one exists
-	if (!MenuHistory.IsEmpty())
-	{
-		CurrentMenuIndex = MenuHistory.Pop();
-		SelectedItemIndex = 0;
-	}
+	if (MenuHistory.IsEmpty())
+		return;
+
+	CurrentMenuIndex = MenuHistory.Last();
+	MenuHistory.Pop();
+	SelectedItemIndex = 0;
 }
 
 
