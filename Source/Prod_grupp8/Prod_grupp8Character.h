@@ -309,6 +309,10 @@ protected:
 	void ReadFishType(USoundBase* FishType);
 	void ReadFishWheight();
 	void ReadFishPrice();
+	void MoveInputReleased();
+
+	/** True after a shop action fires; cleared when the move input returns to zero */
+	bool bShopInputLatched = false;
 
 protected:
 

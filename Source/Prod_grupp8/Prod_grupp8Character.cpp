@@ -80,14 +80,16 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		
 		//Pause
 		EnhancedInputComponent->BindAction(OpenPauseMenuAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoOpenPauseMenu);
-		
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AProd_grupp8Character::MoveInput);
 
 		// Ändra från Triggered till Started här:
 		EnhancedInputComponent->BindAction(ShopTransactionAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoShopTransaction);
 		
 		// Ändra mellan fisk och fiskespö i shop menyn
 		EnhancedInputComponent->BindAction(SwitchShopViewAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwitchShopView);
+		
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AProd_grupp8Character::MoveInputReleased);
+		
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Canceled, this, &AProd_grupp8Character::MoveInputReleased);
 	}
 	else
 	{
@@ -156,19 +158,25 @@ void AProd_grupp8Character::UpdateMoveSound(float DeltaTime)
 
 void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
 {
-	// get the Vector2D move axis
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
-	// pass the axis values to the move input
-	if (ShopInRange && ShopInRange -> shopEnabled)
+	if (ShopInRange && ShopInRange->shopEnabled)
 	{
-		if (MovementVector.Y > 0.5)
+		// Already fired once; wait for the stick to return to zero
+		if (bShopInputLatched)
 		{
-			ShopInRange -> BuyNextRod();
+			return;
 		}
-		else if (MovementVector.Y < -0.5)
+
+		if (MovementVector.Y > 0.5f)
 		{
-			ShopInRange -> SellAllFish();
+			bShopInputLatched = true;
+			ShopInRange->BuyNextRod();
+		}
+		else if (MovementVector.Y < -0.5f)
+		{
+			bShopInputLatched = true;
+			ShopInRange->SellAllFish();
 		}
 	}
 	else
@@ -176,6 +184,12 @@ void AProd_grupp8Character::MoveInput(const FInputActionValue& Value)
 		DoMove(0, MovementVector.Y);
 	}
 }
+
+void AProd_grupp8Character::MoveInputReleased()
+{
+	bShopInputLatched = false;
+}
+
 void AProd_grupp8Character::LookInput(const FInputActionValue& Value)
 {
 	// get the Vector2D look axis
