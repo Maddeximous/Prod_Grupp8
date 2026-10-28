@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "UObject/ConstructorHelpers.h"
+#include "DrawDebugHelpers.h"
 #include "Prod_grupp8Character.h"
 #include "OnboardingSubsystem.h"
 
@@ -82,6 +83,43 @@ void AFish::BeginPlay()
 void AFish::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	if (!bShowDebugSpheres || !GetWorld())
+	{
+		return;
+	}
+
+	// Grön: området där spelaren kan fiska
+	if (FishingSphere)
+	{
+		DrawDebugSphere(
+			GetWorld(),
+			FishingSphere->GetComponentLocation(),
+			FishingSphere->GetScaledSphereRadius(),
+			24,
+			FColor::Green,
+			false,
+			0.0f,
+			0,
+			2.0f
+		);
+	}
+
+	// Gul: ungefärligt område där fiskmåsljudet hörs
+	if (SeagullAudioComp && SeagullHearRadius > 0.0f)
+	{
+		DrawDebugSphere(
+			GetWorld(),
+			SeagullAudioComp->GetComponentLocation(),
+			SeagullHearRadius,
+			24,
+			FColor::Yellow,
+			false,
+			0.0f,
+			0,
+			2.0f
+		);
+	}
 
 }
 
