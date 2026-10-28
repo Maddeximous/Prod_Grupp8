@@ -43,6 +43,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing")
 	bool bCanFish;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool bShowDebugSpheres = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug", meta = (ClampMin = "0.0"))
+	float SeagullHearRadius = 839.358032f; 
 	
 	UFUNCTION()
 	void OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
