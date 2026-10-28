@@ -100,6 +100,7 @@ void AProd_grupp8Character::BeginPlay()
 
 	FishManager = Cast<AFishManager>(UGameplayStatics::GetActorOfClass(this, AFishManager::StaticClass()));
 	PauseMenu = Cast<APauseMenu>(UGameplayStatics::GetActorOfClass(this, APauseMenu::StaticClass()));
+	NumberSpeaker = Cast<ANumberSpeaker>(UGameplayStatics::GetActorOfClass(this, ANumberSpeaker::StaticClass()));
 
 	if (MoveForwardSoundCue)
 	{
@@ -192,8 +193,11 @@ void AProd_grupp8Character::DoMove(float Right, float Forward)
 		if (!bIsFishing)
 		{
 			// pass the move inputs
-			AddMovementInput(GetActorRightVector(), Right);
-			AddMovementInput(GetActorForwardVector(), Forward);
+			if(Forward >= 0.2 || Forward <= -0.2)
+			{
+				AddMovementInput(GetActorRightVector(), Right);
+				AddMovementInput(GetActorForwardVector(), Forward);
+			}
 		}
 	}
 }
@@ -266,12 +270,15 @@ void AProd_grupp8Character::DoAim(float Yaw, float Pitch)
 
 		if (!bIsFishing)
 		{
-			// pass the rotation inputs
-			AddControllerYawInput(Yaw * 0.2f);
-			AddControllerPitchInput(Pitch * 0.2f);
+			if(Yaw >= 0.2 || Yaw <= -0.2)
+			{
+				AddControllerYawInput(Yaw * 0.2f);
+				AddControllerPitchInput(Pitch * 0.2f);
+			}
 		}
 	}
 }
+
 void AProd_grupp8Character::DoReelLine(float Right, float Down)
 {
 	if (GetController())
@@ -299,7 +306,7 @@ void AProd_grupp8Character::DoCastLine()
 		{
 			ShopInRange -> ToggleShop();
 		}
-		else if (!bIsFishing && FishInRange)
+		else if (!bIsFishing && FishInRange && !PauseMenu -> bPaused)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Fish"));
 			

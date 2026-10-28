@@ -22,6 +22,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Narration")
+	USoundBase* GamePausedSound;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Narration")
 	USoundBase* ResumeSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Narration")
@@ -56,6 +59,9 @@ private:
 	
 	UPROPERTY()
 	UAudioComponent* CurrentNarrationComponent = nullptr;
+	
+	UFUNCTION()
+	void HandlePauseAnnouncementFinished();
 	
 	int32 CurrentMenuIndex = 0;
 

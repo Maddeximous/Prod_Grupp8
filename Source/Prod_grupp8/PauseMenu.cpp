@@ -680,6 +680,21 @@ bool APauseMenu::IsPaused() const
 	return bPaused;
 }
 
+
+void APauseMenu::HandlePauseAnnouncementFinished()
+{
+	if (!bPaused)
+	{
+		return;
+	}
+
+	CurrentNarrationComponent = nullptr;
+
+	// Now announce the first highlighted option.
+	PlayNavigationSound();
+}
+
+
 void APauseMenu::TogglePauseMenu()
 {
 	bPaused = !bPaused;
@@ -689,20 +704,70 @@ void APauseMenu::TogglePauseMenu()
 	SelectedItemIndex = 0;
 	MenuHistory.Empty();
 
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
 	if (bPaused)
 	{
-		EnableInput(GetWorld()->GetFirstPlayerController());
+		if (PC)
+		{
+			EnableInput(PC);
+		}
+
 		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.0f);
+
+		// Stop any previous narration.
+		if (CurrentNarrationComponent)
+		{
+			CurrentNarrationComponent->OnAudioFinished.RemoveDynamic(
+				this, &APauseMenu::HandlePauseAnnouncementFinished);
+
+			CurrentNarrationComponent->Stop();
+			CurrentNarrationComponent = nullptr;
+		}
+
+		// First announce that the game is paused.
+		if (GamePausedSound)
+		{
+			CurrentNarrationComponent =
+				UGameplayStatics::SpawnSound2D(this, GamePausedSound);
+
+			if (CurrentNarrationComponent)
+			{
+				CurrentNarrationComponent->OnAudioFinished.AddDynamic(
+					this, &APauseMenu::HandlePauseAnnouncementFinished);
+			}
+			else
+			{
+				// Fallback if the sound could not be created.
+				PlayNavigationSound();
+			}
+		}
+		else
+		{
+			// Fallback if no pause sound is assigned.
+			PlayNavigationSound();
+		}
 	}
 	else
 	{
-		DisableInput(GetWorld()->GetFirstPlayerController());
+		// Stop narration when unpausing.
+		if (CurrentNarrationComponent)
+		{
+			CurrentNarrationComponent->Stop();
+			CurrentNarrationComponent = nullptr;
+		}
+
+		if (PC)
+		{
+			DisableInput(PC);
+		}
+
 		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 
-		// Remove debug text immediately
 		if (GEngine)
 		{
 			GEngine->RemoveOnScreenDebugMessage(4);
 		}
 	}
 }
+
