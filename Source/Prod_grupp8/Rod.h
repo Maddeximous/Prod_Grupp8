@@ -32,6 +32,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rod")
 	ERodTier RodTier = ERodTier::Starter;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rod Type Audio")
+	USoundBase* RodTypeAudio;
 
 protected:
 	// Called when the game starts or when spawned

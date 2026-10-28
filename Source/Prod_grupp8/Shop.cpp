@@ -156,9 +156,8 @@ void AShop::SellAllFish()
 		{
 			continue;
 		}
-
+		
 		TotalPrice += FishManager -> FishDataBase[Fish -> FishSpecies].PricePerKilo * Fish->Weight;
-
 		PlayerInventory->RemoveFish(Fish);
 		Fish->Destroy();
 		++FishSold;
@@ -166,10 +165,12 @@ void AShop::SellAllFish()
 
 	if (FishSold == 0)
 	{
+		// PlayNoMoneySoundWithDelay(1.0f);
 		ShowMessage(2, 3.0f, FColor::Red, TEXT("NO FISH TO SELL"));
 		return;
 	}
 
+	UGameplayStatics::PlaySound2D(this, SellSound, 1.0f, 1.0f, 0.0f);
 	dollars += TotalPrice;
 
 	ShowMessage(2, 3.0f, FColor::Green, FString::Printf(TEXT("SOLD %d FISH FOR %d DOLLARS"), FishSold, TotalPrice));
@@ -186,6 +187,7 @@ void AShop::BuyNextRod()
 
 	if (!Rods.IsValidIndex(NextRodIndex))
 	{
+		PlayNoMoneySoundWithDelay(1.0f);
 		ShowMessage(2, 3.0f, FColor::Yellow, TEXT("ALL RODS OWNED"));
 		return;
 	}
@@ -193,6 +195,7 @@ void AShop::BuyNextRod()
 	ARod* RodForSale = Rods[NextRodIndex];
 	if (!RodForSale)
 	{
+		PlayNoMoneySoundWithDelay(1.0f);
 		UE_LOG(LogTemp, Warning, TEXT("Shop: Rods[%d] is null"), NextRodIndex);
 		return;
 	}
@@ -200,6 +203,7 @@ void AShop::BuyNextRod()
 	const int32 RodPrice = RodForSale->price;
 	if (dollars < RodPrice)
 	{
+		PlayNoMoneySoundWithDelay(1.0f);
 		ShowMessage(2, 3.0f, FColor::Red, FString::Printf(TEXT("NOT ENOUGH MONEY (%d needed)"), RodPrice));
 		return;
 	}
@@ -221,12 +225,12 @@ void AShop::BuyNextRod()
 	NewRod->luck = RodForSale->luck;
 	NewRod->RodTier = RodForSale->RodTier;
 
+	UGameplayStatics::PlaySound2D(this, BuySound, 1.0f, 1.0f, 0.0f);
 	dollars -= RodPrice;
 	PlayerInventory->Rods.Add(NewRod);
 	PlayerInventory->EquipRod(NewRod);
 
 	++NextRodIndex;
-
 	ShowMessage(2, 3.0f, FColor::Green, FString::Printf(TEXT("BOUGHT %s FOR %d DOLLARS"), *RodForSale->name.ToString(), RodPrice));
 	//OnRodBought(RodForSale->name, RodPrice);
 	ShowMoney();
@@ -289,4 +293,23 @@ void AShop::ShowMessage(int32 Key, float Time, const FColor& Color, const FStrin
 	{
 		GEngine->AddOnScreenDebugMessage(Key, Time, Color, Text);
 	}
+}
+
+void AShop::PlayNoMoneySoundWithDelay(float DelaySeconds)
+{
+	if (!NoMoneySound)
+	{
+		return;
+	}
+
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(
+		TimerHandle,
+		[this]()
+		{
+			UGameplayStatics::PlaySound2D(this, NoMoneySound, 1.0f, 1.0f, 0.0f);
+		},
+		DelaySeconds,
+		false
+	);
 }

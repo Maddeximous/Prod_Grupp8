@@ -9,6 +9,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundBase.h"
+#include "NumberSpeaker.h"
 #include "Shop.generated.h"
 
 class AInventory;
@@ -47,6 +48,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")
 	int32 NextRodIndex = 0;
 
+	// ------------ Shop sounds -------------------
+	
 	// Ljudkomponenten som sköter uppspelningen
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
 	TObjectPtr<UAudioComponent> ShopAudioComponent;
@@ -54,6 +57,34 @@ public:
 	// Själva ljudet (t.ex. bakgrundsmusik eller miljöbjäfs i shoppen)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
 	TObjectPtr<USoundBase> ShopAmbientSound;
+	
+	// Sälj sfx
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> SellSound;
+	
+	// Köp sfx
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> BuySound;
+	
+	// No money sfx
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> NoMoneySound;
+	
+	// Dialog för "Du"
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* DialogueYouSound;
+	
+	// Dialog för "Köpte"
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* BoughtDialogueSound;
+	
+	// Dialog för "Sålde"
+	UPROPERTY(EditAnywhere, Category ="Audio")
+	class USoundBase* SoldDialogueSound;
+	
+	//Ljud som kallar på numberspeaker klassen
+	UPROPERTY()
+	TObjectPtr<ANumberSpeaker> NumberSpeaker;
 
 	UFUNCTION()
 	void OnBoxOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -92,6 +123,9 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent,  Category = "Audio Functions")
 	void OnEnterShop();
+	
+	// A helper method that takes a delay and handles the timer internally
+	void PlayNoMoneySoundWithDelay(float DelaySeconds = 1.0f);
 	
 protected:
 	virtual void BeginPlay() override;
