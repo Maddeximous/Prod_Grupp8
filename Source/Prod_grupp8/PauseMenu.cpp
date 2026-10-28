@@ -4,6 +4,9 @@
 #include "PauseMenu.h"
 #include "Inventory.h"
 #include "Fish.h"
+#include "Blueprint/UserWidget.h"
+#include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
@@ -106,14 +109,154 @@ void APauseMenu::Tick(float DeltaTime)
 	}
 }
 
+void APauseMenu::OpenSettings()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (!PC || !SettingsWidgetClass)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Settings widget class or PlayerController is missing"));
+		return;
+	}
+
+	// Don't create the widget multiple times
+	if (SettingsWidget && SettingsWidget->IsInViewport())
+	{
+		return;
+	}
+
+	SettingsWidget = CreateWidget<UUserWidget>(
+		PC,
+		SettingsWidgetClass
+	);
+
+	if (!SettingsWidget)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to create settings widget"));
+		return;
+	}
+
+	SettingsWidget->AddToViewport();
+
+	// Allow the player to interact with the widget
+	PC->SetInputMode(FInputModeGameAndUI());
+	PC->bShowMouseCursor = true;
+
+	// Give the widget keyboard/gamepad focus
+	SettingsWidget->SetIsFocusable(true);
+	PC->SetInputMode(FInputModeGameAndUI().SetWidgetToFocus(
+		SettingsWidget->TakeWidget()
+	));
+}
+
+void APauseMenu::PlayNavigationSound()
+{
+	if (Menus.IsEmpty() || !Menus.IsValidIndex(CurrentMenuIndex))
+	{
+		return;
+	}
+
+	const FMenuData& CurrentMenu = Menus[CurrentMenuIndex];
+
+	if (!CurrentMenu.Items.IsValidIndex(SelectedItemIndex))
+	{
+		return;
+	}
+
+	const FPauseMenuItem& Item = CurrentMenu.Items[SelectedItemIndex];
+	const EPauseMenuAction Action = Item.Action;
+
+	USoundBase* SoundToPlay = nullptr;
+
+	switch (Action)
+	{
+	case EPauseMenuAction::Resume:
+		SoundToPlay = ResumeSound;
+		break;
+
+	case EPauseMenuAction::OpenSettings:
+		SoundToPlay = OptionsSound;
+		break;
+
+	case EPauseMenuAction::OpenFishInventory:
+		SoundToPlay = InventorySound;
+		break;
+
+	case EPauseMenuAction::Quit:
+		SoundToPlay = QuitSound;
+		break;
+
+	default:
+		// Handle menu items whose Action is None.
+		if (Item.Name.ToString().Equals(
+			TEXT("Options"), ESearchCase::IgnoreCase))
+		{
+			SoundToPlay = OptionsSound;
+		}
+		else if (Item.Name.ToString().Equals(
+			TEXT("Resume Game"), ESearchCase::IgnoreCase))
+		{
+			SoundToPlay = ResumeSound;
+		}
+		else if (Item.Name.ToString().Equals(
+			TEXT("Exit Game"), ESearchCase::IgnoreCase))
+		{
+			SoundToPlay = QuitSound;
+		}
+		break;
+	}
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("Narration: Item = %s | Action = %d | Sound assigned = %s"),
+		*Item.Name.ToString(),
+		static_cast<int32>(Action),
+		SoundToPlay ? TEXT("YES") : TEXT("NO"));
+
+	// Stop the previous narration before playing the new one.
+	if (CurrentNarrationComponent)
+	{
+		CurrentNarrationComponent->Stop();
+		CurrentNarrationComponent = nullptr;
+	}
+
+	if (SoundToPlay)
+	{
+		CurrentNarrationComponent =
+			UGameplayStatics::SpawnSound2D(this, SoundToPlay);
+	}
+}
+
+void APauseMenu::CloseSettings()
+{
+	if (SettingsWidget)
+	{
+		SettingsWidget->RemoveFromParent();
+		SettingsWidget = nullptr;
+	}
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (PC)
+	{
+		// Return input to the pause menu
+		PC->SetInputMode(FInputModeGameOnly());
+		PC->bShowMouseCursor = false;
+	}
+
+	// Keep the game paused!
+	bPaused = true;
+}
+
 void APauseMenu::MoveUp()
 {
 	if (bBrowsingFishInventory)
 	{
 		BrowseFishUp();
+		PlayNavigationSound();
 		return;
 	}
-	
+
 	if (Menus.IsEmpty())
 		return;
 
@@ -128,7 +271,8 @@ void APauseMenu::MoveUp()
 	{
 		SelectedItemIndex = CurrentMenu.Items.Num() - 1;
 	}
-	
+
+	PlayNavigationSound();
 }
 
 void APauseMenu::BrowseFishUp()
@@ -162,9 +306,10 @@ void APauseMenu::MoveDown()
 	if (bBrowsingFishInventory)
 	{
 		BrowseFishDown();
+		PlayNavigationSound();
 		return;
 	}
-	
+
 	if (Menus.IsEmpty())
 		return;
 
@@ -179,7 +324,8 @@ void APauseMenu::MoveDown()
 	{
 		SelectedItemIndex = 0;
 	}
-	
+
+	PlayNavigationSound();
 }
 
 void APauseMenu::Select()
@@ -247,20 +393,37 @@ void APauseMenu::ExecuteAction(EPauseMenuAction Action)
 		break;
 
 	case EPauseMenuAction::Resume:
-		bPaused = false;
-		break;
+        // Unpause the game and restore normal time and input.
+        if (bPaused)
+        {
+            TogglePauseMenu();
+        }
+        break;
 
 	case EPauseMenuAction::Restart:
 		break;
 
 	case EPauseMenuAction::Quit:
-		break;
+        // Restore normal time before loading the main menu.
+        bPaused = false;
+    
+        if (UWorld* World = GetWorld())
+        {
+            UGameplayStatics::SetGlobalTimeDilation(World, 1.0f);
+            UGameplayStatics::OpenLevel(
+                this,
+                FName(TEXT("Level_Main_Menu"))
+            );
+        }
+        break;
 
 	case EPauseMenuAction::OpenSettings:
+		OpenSettings();
 		break;
 
 	case EPauseMenuAction::None:
 		break;
+		
 	}
 }
 

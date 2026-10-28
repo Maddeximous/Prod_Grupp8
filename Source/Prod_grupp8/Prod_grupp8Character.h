@@ -9,6 +9,7 @@
 #include "PauseMenu.h"
 #include "Inventory.h"
 #include "Shop.h"
+#include "NumberSpeaker.h"
 #include "Prod_grupp8Character.generated.h"
 
 class UInputComponent;
@@ -64,14 +65,6 @@ protected:
 	/** Sonar Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* SonarAction;
-	
-	/** Sonar Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	class UInputAction* SwayRightAction;
-	
-	/** Sonar Input Action */
-	UPROPERTY(EditAnywhere, Category ="Input")
-	class UInputAction* SwayLeftAction;
 	
 	/** Sonar Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
@@ -203,6 +196,17 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
 	void OnFishSphereEntered();
 	
+	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
+	void FishFight();
+	
+	//Blueprint event for going to shop for the first time 
+	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
+	void OnShopEnetered();
+	
+	//Blueprint event for going to shop for the first time 
+	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
+	void OnShopOpened();
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Fishing")
 	void OnGhostTreasureCaught();
 	
@@ -218,7 +222,9 @@ public:
 	UPROPERTY()
 	TObjectPtr<AShop> ShopInRange;
 	
-	
+	UPROPERTY()
+	TObjectPtr<ANumberSpeaker> NumberSpeaker;
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -260,13 +266,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 	
-	/** Handles Sway input for LB (right) */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSwayLeft();
-	
-	/** Handles Sway input for RB (left) */
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSwayRight();
 	
 	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -281,9 +280,6 @@ protected:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category ="Onboarding")
 	void OnFishCaught();
-	
-	UFUNCTION(BlueprintImplementableEvent, Category = "Fishing")
-	void OnFishCaughtWithInfo(EFishType Species, float Weight, float TotalPrice);
 	
 	void StartFishing();
 	

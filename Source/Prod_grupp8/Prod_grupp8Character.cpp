@@ -14,6 +14,7 @@
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "Sound/SoundBase.h"
 #include "GameTelemetry.h"
 #include "Shop.h"
 #include "OnboardingSubsystem.h"
@@ -76,12 +77,6 @@ void AProd_grupp8Character::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		
 		// Sonar
 		EnhancedInputComponent->BindAction(SonarAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSonar);
-		
-		// Sway right
-		EnhancedInputComponent->BindAction(SwayRightAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayRight);
-		
-		// Sway left
-		EnhancedInputComponent->BindAction(SwayLeftAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoSwayLeft);
 		
 		//Pause
 		EnhancedInputComponent->BindAction(OpenPauseMenuAction, ETriggerEvent::Started, this, &AProd_grupp8Character::DoOpenPauseMenu);
@@ -249,29 +244,6 @@ void AProd_grupp8Character::DoSonar()
 		}
 	}
 }
-
-void AProd_grupp8Character::DoSwayRight()
-{
-	if (GetController())
-	{
-		if (bIsFishOnHook)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Right"));
-		}
-	}
-}
-
-void AProd_grupp8Character::DoSwayLeft()
-{
-	if (GetController())
-	{
-		if (bIsFishOnHook)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Left"));
-		}
-	}
-}
-
 void AProd_grupp8Character::ReelLineInput(const FInputActionValue& Value)
 {
 	// get the Vector2D move axis
@@ -338,8 +310,8 @@ void AProd_grupp8Character::DoCastLine()
 
 void AProd_grupp8Character::DoOpenPauseMenu()
 {
-	//PauseMenu -> TogglePauseMenu();
-	UE_LOG(LogTemp, Warning, TEXT("Ingen meny. Shit är knas"));
+	PauseMenu -> TogglePauseMenu();
+	//UE_LOG(LogTemp, Warning, TEXT("Ingen meny. Shit är knas"));
 }
 
 void AProd_grupp8Character::StartFishing()
@@ -422,17 +394,43 @@ void AProd_grupp8Character::Caught()
 	{
 		CaughtSpecies = CaughtFish->FishSpecies;
 		CaughtWeight = CaughtFish->Weight;
-
+		
+		FString SpeciesNameStr = UEnum::GetValueAsString(CaughtSpecies);
+		UE_LOG(LogTemp, Warning, TEXT("Du fångade fiskart: %s"), *SpeciesNameStr);
+		
 		if (IsValid(FishManager))
 		{
-			if (const FFishData* FishInfo =
-				FishManager->FishDataBase.Find(CaughtSpecies))
+			if (const FFishData* FishInfo = FishManager->FishDataBase.Find(CaughtSpecies))
 			{
 				CaughtTotalPrice = CaughtWeight * FishInfo->PricePerKilo;
+
+				if (FishInfo->SpeciesNameAudio)
+				{
+					UGameplayStatics::PlaySound2D(this, FishInfo->SpeciesNameAudio, 1.0f, 1.0f, 0.0f);
+					UE_LOG(LogTemp, Warning, TEXT("Spelar upp namnljud för fisk!"));
+					if (FishInfo->SpeciesNameAudio)
+					{
+						// 1. Spela upp fiskartens namn
+						UGameplayStatics::PlaySound2D(this, FishInfo->SpeciesNameAudio, 1.0f, 1.0f, 0.0f);
+						UE_LOG(LogTemp, Warning, TEXT("Spelar upp namnljud för fisk!"));
+						// Anropa din metod direkt här:
+						if (IsValid(NumberSpeaker))
+						{
+							NumberSpeaker->SpeakNumber(CaughtWeight, 1, true);
+						}
+					}
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("FishInfo hittades, men SpeciesNameAudio var nullptr (None)!"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Hittade inte fisken i FishDataBase!"));
 			}
 		}
 	}
-	
 	if (IsValid(FishManager) && bHasCaughtFish)
 	{
 		FishManager->OnFishCaught(CaughtFish);
@@ -447,13 +445,8 @@ void AProd_grupp8Character::Caught()
 	}
 	
 	//Blueprintcallable event for the onboarding
-	if (bHasCaughtFish)
-	{
-		OnFishCaughtWithInfo(
-			CaughtSpecies,
-			CaughtWeight,
-			CaughtTotalPrice);
-	}
+	OnFishCaught();
+	
 	if (bCaughtGhostTreasure)
 	{
 		OnGhostTreasureCaught();
@@ -530,7 +523,7 @@ float AProd_grupp8Character::Reeling(float DeltaTime)
 			ReelInSoundCueObject->FadeIn(0.4f, 0.6f);
 		}
 		
-		return DeltaTime * ReelStickDegree * 10.0f;
+		return DeltaTime * ReelStickDegree * 20.0f;
 	}
 	if (ReelInSoundCueObject && bReelSoundActive)
 	{
@@ -549,6 +542,7 @@ float AProd_grupp8Character::Reeling(float DeltaTime)
 
 void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 {
+	FishFight();
 	FishFightTimer -= DeltaTime;
 	if (FishFightTimer < 0.0)
 	{
