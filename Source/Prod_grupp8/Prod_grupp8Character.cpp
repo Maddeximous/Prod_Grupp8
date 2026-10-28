@@ -190,7 +190,7 @@ void AProd_grupp8Character::DoMove(float Right, float Forward)
 {
 	if (GetController())
 	{
-		if (!bIsFishing)
+		if (!bIsFishing && !PauseMenu -> bPaused)
 		{
 			// pass the move inputs
 			if(Forward >= 0.2 || Forward <= -0.2)
@@ -268,7 +268,7 @@ void AProd_grupp8Character::DoAim(float Yaw, float Pitch)
 			return;
 		}
 
-		if (!bIsFishing)
+		if (!bIsFishing && !PauseMenu -> bPaused)
 		{
 			if(Yaw >= 0.2 || Yaw <= -0.2)
 			{
@@ -393,51 +393,8 @@ void AProd_grupp8Character::Caught()
 	AFish* CaughtFish = FishInRange;
 	const bool bHasCaughtFish = IsValid(CaughtFish);
 
-	EFishType CaughtSpecies = EFishType::None;
-	float CaughtWeight = 0.0f;
-	float CaughtTotalPrice = 0.0f;
-
-	if (bHasCaughtFish)
-	{
-		CaughtSpecies = CaughtFish->FishSpecies;
-		CaughtWeight = CaughtFish->Weight;
-		
-		FString SpeciesNameStr = UEnum::GetValueAsString(CaughtSpecies);
-		UE_LOG(LogTemp, Warning, TEXT("Du fångade fiskart: %s"), *SpeciesNameStr);
-		
-		if (IsValid(FishManager))
-		{
-			if (const FFishData* FishInfo = FishManager->FishDataBase.Find(CaughtSpecies))
-			{
-				CaughtTotalPrice = CaughtWeight * FishInfo->PricePerKilo;
-
-				if (FishInfo->SpeciesNameAudio)
-				{
-					UGameplayStatics::PlaySound2D(this, FishInfo->SpeciesNameAudio, 1.0f, 1.0f, 0.0f);
-					UE_LOG(LogTemp, Warning, TEXT("Spelar upp namnljud för fisk!"));
-					if (FishInfo->SpeciesNameAudio)
-					{
-						// 1. Spela upp fiskartens namn
-						UGameplayStatics::PlaySound2D(this, FishInfo->SpeciesNameAudio, 1.0f, 1.0f, 0.0f);
-						UE_LOG(LogTemp, Warning, TEXT("Spelar upp namnljud för fisk!"));
-						// Anropa din metod direkt här:
-						if (IsValid(NumberSpeaker))
-						{
-							NumberSpeaker->SpeakNumber(CaughtWeight, 1, true);
-						}
-					}
-				}
-				else
-				{
-					UE_LOG(LogTemp, Error, TEXT("FishInfo hittades, men SpeciesNameAudio var nullptr (None)!"));
-				}
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Hittade inte fisken i FishDataBase!"));
-			}
-		}
-	}
+	ReadFish(CaughtFish);
+	
 	if (IsValid(FishManager) && bHasCaughtFish)
 	{
 		FishManager->OnFishCaught(CaughtFish);
@@ -561,7 +518,7 @@ void AProd_grupp8Character::FishFighting(float DeltaTime, float ReelValue)
 		LineDurability += 20.0f;
 	}
 	
-	LineDurability -= FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * ReelValue * 13.0f;
+	LineDurability -= FishManager -> FishDataBase[FishInRange -> FishSpecies].CatchDifficulty * ReelValue * 11.0f;
 	if (TensionSoundCueObject) {TensionSoundCueObject -> SetPitchMultiplier(4.0f - LineDurability * (3.0f / 100.0f));}
 	//UE_LOG(LogTemp, Warning, TEXT("Pitch %f"), TensionSoundCueObject -> PitchMultiplier);
 	if (LineDurability <= 0.0)
@@ -588,4 +545,42 @@ void AProd_grupp8Character::DoSwitchShopView()
 	{
 		ShopInRange->ToggleSection();
 	}
+}
+
+void AProd_grupp8Character::ReadFish(AFish* CaughtFish)
+{
+	if (IsValid(CaughtFish))
+	{
+		CaughtSpecies = CaughtFish->FishSpecies;
+		CaughtWeight = CaughtFish->Weight;
+		
+		if (IsValid(FishManager))
+		{
+			if (const FFishData* FishInfo = FishManager->FishDataBase.Find(CaughtSpecies))
+			{
+				CaughtTotalPrice = CaughtWeight * FishInfo->PricePerKilo;
+				ReadFishType(FishInfo -> SpeciesNameAudio);
+			}
+		}
+	}
+}
+
+void AProd_grupp8Character::ReadFishType(USoundBase* FishType)
+{
+	FTimerHandle UnusedHandle;
+	const float TimeToNextLine = FishType -> GetDuration() + 0.2;
+	UGameplayStatics::PlaySound2D(this, FishType, 1.0f, 1.0f, 0.0f);
+	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::ReadFishWheight, TimeToNextLine, false);
+}
+
+void AProd_grupp8Character::ReadFishWheight()
+{
+	FTimerHandle UnusedHandle;
+	const float TimeToNextLine = NumberSpeaker->SpeakNumber(CaughtWeight,0, true);
+	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::ReadFishPrice, TimeToNextLine, false);
+}
+
+void AProd_grupp8Character::ReadFishPrice()
+{
+	const float TimeToNextLine = NumberSpeaker->SpeakNumber(CaughtTotalPrice, 0, true);
 }
