@@ -62,10 +62,8 @@ void ANumberSpeaker::AppendWholeNumber(int32 N)
     }
 }
 
-void ANumberSpeaker::BuildQueue(float Value, int32 DecimalPlaces, bool bTrim)
+void ANumberSpeaker::AppendNumber(float Value, int32 DecimalPlaces, bool bTrim)
 {
-    Queue.Reset();
-
     DecimalPlaces = FMath::Clamp(DecimalPlaces, 0, 8);
     const FString S = FString::Printf(TEXT("%.*f"), DecimalPlaces, FMath::Abs(Value));
 
@@ -135,15 +133,25 @@ void ANumberSpeaker::StopSpeaking()
     if (AudioComp) AudioComp->Stop();
 }
 
-float ANumberSpeaker::SpeakWithSuffix(float Value, int32 DecimalPlaces, bool bTrim, USoundBase* Suffix)
+void ANumberSpeaker::BeginSequence()
 {
     StopSpeaking();
-    BuildQueue(Value, DecimalPlaces, bTrim);
+}
 
-    if (Suffix && Queue.Num() > 0)
-    {
-        Queue.Add(Suffix);
-    }
+void ANumberSpeaker::QueueClip(USoundBase* Clip)
+{
+    if (Clip) Queue.Add(Clip);
+}
+
+void ANumberSpeaker::QueueNumber(float Value, int32 DecimalPlaces, bool bTrimTrailingZeros, USoundBase* Suffix)
+{
+    AppendNumber(Value, DecimalPlaces, bTrimTrailingZeros);
+    QueueClip(Suffix);
+}
+
+float ANumberSpeaker::PlaySequence()
+{
+    if (Queue.Num() == 0) return 0.f;
 
     float TotalDuration = 0.f;
     for (const TObjectPtr<USoundBase>& Clip : Queue)
@@ -156,11 +164,16 @@ float ANumberSpeaker::SpeakWithSuffix(float Value, int32 DecimalPlaces, bool bTr
         }
     }
 
-    if (Queue.Num() == 0) return 0.f;
-
     bSpeaking = true;
     PlayNext();
     return TotalDuration;
+}
+
+float ANumberSpeaker::SpeakWithSuffix(float Value, int32 DecimalPlaces, bool bTrim, USoundBase* Suffix)
+{
+    BeginSequence();
+    QueueNumber(Value, DecimalPlaces, bTrim, Suffix);
+    return PlaySequence();
 }
 
 float ANumberSpeaker::SpeakNumber(float Value, int32 DecimalPlaces, bool bTrimTrailingZeros)

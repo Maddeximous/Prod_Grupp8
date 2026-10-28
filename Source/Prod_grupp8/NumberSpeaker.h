@@ -34,6 +34,22 @@ public:
     /** Speak a number followed by the kronor clip. */
     UFUNCTION(BlueprintCallable, Category="NumberSpeech")
     float SpeakSek(float Value, int32 DecimalPlaces = 2, bool bTrimTrailingZeros = true);
+    
+    /** Start a new spoken sequence. Interrupts anything currently playing. */
+    UFUNCTION(BlueprintCallable, Category="NumberSpeech")
+    void BeginSequence();
+
+    /** Add any clip to the sequence. Null clips are ignored. */
+    UFUNCTION(BlueprintCallable, Category="NumberSpeech")
+    void QueueClip(USoundBase* Clip);
+
+    /** Add a spoken number (and an optional clip after it) to the sequence. */
+    UFUNCTION(BlueprintCallable, Category="NumberSpeech")
+    void QueueNumber(float Value, int32 DecimalPlaces = 0, bool bTrimTrailingZeros = true, USoundBase* Suffix = nullptr);
+
+    /** Start playing the queued sequence. Returns total duration. */
+    UFUNCTION(BlueprintCallable, Category="NumberSpeech")
+    float PlaySequence();
 
     /** Fires when the last clip of a number has finished. */
     UPROPERTY(BlueprintAssignable, Category="NumberSpeech")
@@ -76,6 +92,7 @@ private:
     void BuildQueue(float Value, int32 DecimalPlaces, bool bTrim);
     void AppendWholeNumber(int32 N);
     float SpeakWithSuffix(float Value, int32 DecimalPlaces, bool bTrim, USoundBase* Suffix);
+    void AppendNumber(float Value, int32 DecimalPlaces, bool bTrim);
 
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<UAudioComponent> AudioComp;

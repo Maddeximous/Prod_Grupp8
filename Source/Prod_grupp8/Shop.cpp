@@ -35,6 +35,11 @@ void AShop::BeginPlay()
 		TriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AShop::OnBoxOverlapBegin);
 		TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AShop::OnBoxOverlapEnd);
 	}
+	
+	if (!NumberSpeaker)
+	{
+		NumberSpeaker = Cast<ANumberSpeaker>(UGameplayStatics::GetActorOfClass(this, ANumberSpeaker::StaticClass()));
+	}
 
 	if (ShopWidgetClass)
 	{
@@ -170,7 +175,7 @@ void AShop::SellAllFish()
 		return;
 	}
 
-	UGameplayStatics::PlaySound2D(this, SellSound, 1.0f, 1.0f, 0.0f);
+	SoldFishSound(FishSold, TotalPrice);
 	dollars += TotalPrice;
 
 	ShowMessage(2, 3.0f, FColor::Green, FString::Printf(TEXT("SOLD %d FISH FOR %d DOLLARS"), FishSold, TotalPrice));
@@ -203,7 +208,7 @@ void AShop::BuyNextRod()
 	const int32 RodPrice = RodForSale->price;
 	if (dollars < RodPrice)
 	{
-		PlayNoMoneySoundWithDelay(1.0f);
+		CantBuyRodSound(RodForSale, RodPrice, dollars);
 		ShowMessage(2, 3.0f, FColor::Red, FString::Printf(TEXT("NOT ENOUGH MONEY (%d needed)"), RodPrice));
 		return;
 	}
@@ -224,8 +229,9 @@ void AShop::BuyNextRod()
 	NewRod->price = RodForSale->price;
 	NewRod->luck = RodForSale->luck;
 	NewRod->RodTier = RodForSale->RodTier;
+	NewRod->RodTypeAudio = RodForSale->RodTypeAudio;
 
-	UGameplayStatics::PlaySound2D(this, BuySound, 1.0f, 1.0f, 0.0f);
+	BoughtRodSound(RodForSale, RodPrice);
 	dollars -= RodPrice;
 	PlayerInventory->Rods.Add(NewRod);
 	PlayerInventory->EquipRod(NewRod);
@@ -312,4 +318,59 @@ void AShop::PlayNoMoneySoundWithDelay(float DelaySeconds)
 		DelaySeconds,
 		false
 	);
+}
+
+void AShop::BoughtRodSound(const ARod* Rod, int32 Price)
+{
+	if (!NumberSpeaker)
+	{
+		UGameplayStatics::PlaySound2D(this, BuySound, 1.0f, 1.0f, 0.0f);
+		return;
+	}
+
+	// BuySound -> "Köpte" -> rod name -> "för" -> price kronor
+	NumberSpeaker->BeginSequence();
+	NumberSpeaker->QueueClip(BuySound);
+	NumberSpeaker->QueueClip(BoughtDialogueSound);
+	NumberSpeaker->QueueClip(Rod ? Rod->RodTypeAudio : nullptr);
+	NumberSpeaker->QueueClip(ForDialogueSound);
+	NumberSpeaker->QueueNumber(Price, 0, true, NumberSpeaker->Kronor);
+	NumberSpeaker->PlaySequence();
+}
+
+void AShop::SoldFishSound(int32 FishSold, int32 TotalPrice)
+{
+	if (!NumberSpeaker)
+	{
+		UGameplayStatics::PlaySound2D(this, SellSound, 1.0f, 1.0f, 0.0f);
+		return;
+	}
+
+	// SellSound -> "Sålde" -> fish count -> "Fiskar för" -> total kronor
+	NumberSpeaker->BeginSequence();
+	NumberSpeaker->QueueClip(SellSound);
+	NumberSpeaker->QueueClip(SoldDialogueSound);
+	//NumberSpeaker->QueueNumber(FishSold, 0);
+	NumberSpeaker->QueueClip(FishForDialogueSound);
+	NumberSpeaker->QueueNumber(TotalPrice, 0, true, NumberSpeaker->Kronor);
+	NumberSpeaker->PlaySequence();
+}
+
+void AShop::CantBuyRodSound(const ARod* Rod, int32 Price, int32 CurrentMoney)
+{
+	if (!NumberSpeaker)
+	{
+		UGameplayStatics::PlaySound2D(this, NoMoneySound, 1.0f, 1.0f, 0.0f);
+		return;
+	}
+
+	
+	NumberSpeaker->BeginSequence();
+	NumberSpeaker->QueueClip(NoMoneySound);
+	NumberSpeaker->QueueClip(Rod ? Rod->RodTypeAudio : nullptr);
+	NumberSpeaker->QueueClip(CostsDialogueSound);
+	NumberSpeaker->QueueNumber(Price, 0, true, NumberSpeaker->Kronor);
+	NumberSpeaker->QueueClip(YouHaveDialogueSound);
+	NumberSpeaker->QueueNumber(CurrentMoney, 0, true, NumberSpeaker->Kronor);
+	NumberSpeaker->PlaySequence();
 }
