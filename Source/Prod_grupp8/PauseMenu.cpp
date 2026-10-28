@@ -607,7 +607,7 @@ void APauseMenu::OpenFishInventory()
     CurrentFishIndex = 0;
 
     // Only enable browsing after the lists have been populated.
-    bBrowsingFishInventory = !FishList.IsEmpty();
+    bBrowsingFishInventory = true;
 
     UE_LOG(LogTemp, Warning,
         TEXT("Fish menu items: %d | FishList items: %d | Browsing: %s"),
@@ -622,37 +622,43 @@ void APauseMenu::OpenFishInventory()
 }
 
 
+
+
 void APauseMenu::GoBack()
 {
-	if (!bPaused) return;
-	if (MenuHistory.IsEmpty())
-	{
-		CurrentMenuIndex = 0;
-	}
-	SelectedItemIndex = 0;
-	UE_LOG(LogTemp, Warning, TEXT("=== GOBACK ==="));
+	if (!bPaused)
+		return;
+
+	UE_LOG(LogTemp, Warning, TEXT("=== GOBACK PRESSED ==="));
+
 	if (bBrowsingFishInventory)
 	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("Back pressed in fish inventory"));
+
 		bBrowsingFishInventory = false;
 		FishList.Empty();
 		CurrentFishIndex = 0;
-
-		CurrentMenuIndex = 0;
-		MenuHistory.Pop();
-		UE_LOG(LogTemp, Warning, TEXT("=== EXITING FISH INV ==="));
 		SelectedItemIndex = 0;
+
+		// Force the main pause menu.
+		CurrentMenuIndex = 0;
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("Returned to main pause menu"));
+
 		return;
 	}
-	
+
 	if (MenuHistory.IsEmpty())
 		return;
 
 	CurrentMenuIndex = MenuHistory.Last();
 	MenuHistory.Pop();
-
 	SelectedItemIndex = 0;
-	
 }
+
+
 
 void APauseMenu::UpdateDebugText()
 {
@@ -868,6 +874,7 @@ void APauseMenu::TogglePauseMenu()
 		}
 
 		// Resume the game
+		// Stop any currently playing sound
 		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 
 		if (GEngine)
