@@ -8,6 +8,11 @@
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
 #include "Engine/Engine.h"
+#include "NumberSpeaker.h"
+#include "FishManager.h"
+#include "Prod_grupp8Character.h"
+#include "EngineUtils.h"
+#include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "Components/InputComponent.h"
@@ -252,12 +257,14 @@ void APauseMenu::CloseSettings()
 void APauseMenu::MoveUp()
 {
 	if (!bPaused) return;
+	
 	if (bBrowsingFishInventory)
 	{
 		BrowseFishUp();
-		PlayNavigationSound();
+		ReadSelectedFish();
 		return;
 	}
+
 
 	if (Menus.IsEmpty())
 		return;
@@ -306,12 +313,16 @@ void APauseMenu::BrowseFishDown()
 void APauseMenu::MoveDown()
 {
 	if (!bPaused) return;
+	
+	
+	
 	if (bBrowsingFishInventory)
 	{
 		BrowseFishDown();
-		PlayNavigationSound();
+		ReadSelectedFish();
 		return;
 	}
+
 
 	if (Menus.IsEmpty())
 		return;
@@ -431,6 +442,100 @@ void APauseMenu::ExecuteAction(EPauseMenuAction Action)
 	}
 }
 
+void APauseMenu::FindNumberSpeaker()
+{
+	if (IsValid(NumberSpeaker))
+	{
+		return;
+	}
+
+	for (TActorIterator<ANumberSpeaker> It(GetWorld()); It; ++It)
+	{
+		NumberSpeaker = *It;
+		break;
+	}
+}
+
+void APauseMenu::StopFishNarration()
+{
+	GetWorldTimerManager().ClearTimer(FishNarrationTimer);
+
+	if (IsValid(FishNarrationComponent))
+	{
+		FishNarrationComponent->Stop();
+		FishNarrationComponent = nullptr;
+	}
+
+	// Also stop NumberSpeaker's active audio here if it has
+	// its own audio component and stop function.
+}
+
+
+
+
+void APauseMenu::ReadSelectedFish()
+{
+	if (!bPaused || !bBrowsingFishInventory)
+	{
+		return;
+	}
+
+	if (!FishList.IsValidIndex(CurrentFishIndex))
+	{
+		return;
+	}
+
+	AFish* Fish = FishList[CurrentFishIndex].Get();
+
+	if (!IsValid(Fish))
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	APlayerController* PC = World
+		? World->GetFirstPlayerController()
+		: nullptr;
+
+	AProd_grupp8Character* Character = PC
+		? Cast<AProd_grupp8Character>(PC->GetCharacter())
+		: nullptr;
+
+	if (IsValid(Character))
+	{
+		Character->ReadFish(Fish);
+	}
+}
+
+
+
+
+void APauseMenu::ReadSelectedFishWeight()
+{
+	if (!bPaused || !bBrowsingFishInventory)
+		return;
+
+	const float Duration =
+		NumberSpeaker->SpeakKilo(SelectedFishWeight, 0, true);
+
+	GetWorldTimerManager().SetTimer(
+		FishNarrationTimer,
+		this,
+		&APauseMenu::ReadSelectedFishPrice,
+		Duration,
+		false
+	);
+}
+
+void APauseMenu::ReadSelectedFishPrice()
+{
+	if (!bPaused || !bBrowsingFishInventory)
+		return;
+
+	NumberSpeaker->SpeakSek(SelectedFishPrice, 0, true);
+}
+
+
 void APauseMenu::OpenFishInventory()
 {
     UE_LOG(LogTemp, Warning, TEXT("=== OPEN FISH INVENTORY ==="));
@@ -448,60 +553,37 @@ void APauseMenu::OpenFishInventory()
     }
 
     FMenuData& FishMenu = Menus[2];
-    FishMenu.Items.Empty();
 
+    // Clear both lists before rebuilding the inventory.
+    FishMenu.Items.Empty();
+    FishList.Empty();
+
+    // Add each valid fish to BOTH the menu and the fish list.
     for (AFish* Fish : Inventory->Fish)
     {
         if (!IsValid(Fish))
+        {
             continue;
+        }
+
+        // This is the missing line that lets ReadSelectedFish find the fish.
+        FishList.Add(Fish);
 
         FString FishTypeName;
 
         switch (Fish->FishSpecies)
         {
-        case EFishType::Aborre:
-            FishTypeName = TEXT("Aborre");
-            break;
-
-        case EFishType::Gadda:
-            FishTypeName = TEXT("Gädda");
-            break;
-
-        case EFishType::Gos:
-            FishTypeName = TEXT("Gös");
-            break;
-
-        case EFishType::Insjooring:
-            FishTypeName = TEXT("Insjööring");
-            break;
-
-        case EFishType::Roding:
-            FishTypeName = TEXT("Röding");
-            break;
-
-        case EFishType::Regnbage:
-            FishTypeName = TEXT("Regnbåge");
-            break;
-
-        case EFishType::Sik:
-            FishTypeName = TEXT("Sik");
-            break;
-
-        case EFishType::Lake:
-            FishTypeName = TEXT("Lake");
-            break;
-
-        case EFishType::Braxen:
-            FishTypeName = TEXT("Braxen");
-            break;
-
-        case EFishType::Sutare:
-            FishTypeName = TEXT("Sutare");
-            break;
-
-        default:
-            FishTypeName = TEXT("Unknown");
-            break;
+        case EFishType::Aborre:     FishTypeName = TEXT("Aborre"); break;
+        case EFishType::Gadda:      FishTypeName = TEXT("Gädda"); break;
+        case EFishType::Gos:        FishTypeName = TEXT("Gös"); break;
+        case EFishType::Insjooring: FishTypeName = TEXT("Insjööring"); break;
+        case EFishType::Roding:     FishTypeName = TEXT("Röding"); break;
+        case EFishType::Regnbage:   FishTypeName = TEXT("Regnbåge"); break;
+        case EFishType::Sik:        FishTypeName = TEXT("Sik"); break;
+        case EFishType::Lake:       FishTypeName = TEXT("Lake"); break;
+        case EFishType::Braxen:     FishTypeName = TEXT("Braxen"); break;
+        case EFishType::Sutare:     FishTypeName = TEXT("Sutare"); break;
+        default:                    FishTypeName = TEXT("Unknown"); break;
         }
 
         FPauseMenuItem NewItem;
@@ -520,13 +602,25 @@ void APauseMenu::OpenFishInventory()
         FishMenu.Items.Add(NewItem);
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("Fish menu populated: %d items"),
-        FishMenu.Items.Num());
-
     CurrentMenuIndex = 2;
     SelectedItemIndex = 0;
+    CurrentFishIndex = 0;
 
+    // Only enable browsing after the lists have been populated.
+    bBrowsingFishInventory = !FishList.IsEmpty();
+
+    UE_LOG(LogTemp, Warning,
+        TEXT("Fish menu items: %d | FishList items: %d | Browsing: %s"),
+        FishMenu.Items.Num(),
+        FishList.Num(),
+        bBrowsingFishInventory ? TEXT("true") : TEXT("false"));
+
+    if (bBrowsingFishInventory)
+    {
+        ReadSelectedFish();
+    }
 }
+
 
 void APauseMenu::GoBack()
 {
