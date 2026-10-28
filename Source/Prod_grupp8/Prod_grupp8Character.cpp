@@ -576,11 +576,11 @@ void AProd_grupp8Character::ReadFishType(USoundBase* FishType)
 void AProd_grupp8Character::ReadFishWheight()
 {
 	FTimerHandle UnusedHandle;
-	const float TimeToNextLine = NumberSpeaker->SpeakNumber(CaughtWeight,0, true);
+	const float TimeToNextLine = NumberSpeaker->SpeakKilo(CaughtWeight,0, true);
 	GetWorldTimerManager().SetTimer(UnusedHandle, this, &AProd_grupp8Character::ReadFishPrice, TimeToNextLine, false);
 }
 
 void AProd_grupp8Character::ReadFishPrice()
 {
-	const float TimeToNextLine = NumberSpeaker->SpeakNumber(CaughtTotalPrice, 0, true);
+	const float TimeToNextLine = NumberSpeaker->SpeakSek(CaughtTotalPrice, 0, true);
 }

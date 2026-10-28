@@ -101,28 +101,6 @@ void ANumberSpeaker::BuildQueue(float Value, int32 DecimalPlaces, bool bTrim)
     }
 }
 
-float ANumberSpeaker::SpeakNumber(float Value, int32 DecimalPlaces, bool bTrimTrailingZeros)
-{
-    StopSpeaking();
-    BuildQueue(Value, DecimalPlaces, bTrimTrailingZeros);
-
-    float TotalDuration = 0.f;
-    for (const TObjectPtr<USoundBase>& Clip : Queue)
-    {
-        if (!Clip) continue;
-        const float D = Clip->GetDuration();
-        if (D < INDEFINITELY_LOOPING_DURATION) // ignore looping sounds
-        {
-            TotalDuration += D;
-        }
-    }
-
-    if (Queue.Num() == 0) return 0.f;
-
-    bSpeaking = true;
-    PlayNext();
-    return TotalDuration;
-}
 
 void ANumberSpeaker::PlayNext()
 {
@@ -155,4 +133,47 @@ void ANumberSpeaker::StopSpeaking()
     Queue.Reset();
     bSpeaking = false;
     if (AudioComp) AudioComp->Stop();
+}
+
+float ANumberSpeaker::SpeakWithSuffix(float Value, int32 DecimalPlaces, bool bTrim, USoundBase* Suffix)
+{
+    StopSpeaking();
+    BuildQueue(Value, DecimalPlaces, bTrim);
+
+    if (Suffix && Queue.Num() > 0)
+    {
+        Queue.Add(Suffix);
+    }
+
+    float TotalDuration = 0.f;
+    for (const TObjectPtr<USoundBase>& Clip : Queue)
+    {
+        if (!Clip) continue;
+        const float D = Clip->GetDuration();
+        if (D < INDEFINITELY_LOOPING_DURATION) // ignore looping sounds
+        {
+            TotalDuration += D;
+        }
+    }
+
+    if (Queue.Num() == 0) return 0.f;
+
+    bSpeaking = true;
+    PlayNext();
+    return TotalDuration;
+}
+
+float ANumberSpeaker::SpeakNumber(float Value, int32 DecimalPlaces, bool bTrimTrailingZeros)
+{
+    return SpeakWithSuffix(Value, DecimalPlaces, bTrimTrailingZeros, nullptr);
+}
+
+float ANumberSpeaker::SpeakKilo(float Value, int32 DecimalPlaces, bool bTrimTrailingZeros)
+{
+    return SpeakWithSuffix(Value, DecimalPlaces, bTrimTrailingZeros, Kilogram);
+}
+
+float ANumberSpeaker::SpeakSek(float Value, int32 DecimalPlaces, bool bTrimTrailingZeros)
+{
+    return SpeakWithSuffix(Value, DecimalPlaces, bTrimTrailingZeros, Kronor);
 }
